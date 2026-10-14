@@ -1,21 +1,36 @@
-# Personal Chess AI Coach
+# Personal Chess Coach
 
-A desktop chess game reviewer and live evaluation suite built with Python, Pygame, and Stockfish. The application fetches match histories directly from the Chess.com REST API, performs multi-thread background Stockfish evaluations, and delivers move-by-move tactical coaching feedback.
+A desktop game reviewer for your own Chess.com games. It downloads your recent games, runs Stockfish on every position in a background thread, and walks you through each move with an evaluation bar, a move-quality label and the engine's suggested continuation.
 
-## Features
-- **Chess.com Ingestion:** Directly imports match history via the Chess.com public API.
-- **Stockfish Engine Integration:** Non-blocking multi-threaded analysis calculating centipawn evaluations up to depth 16+.
-- **Dynamic Coaching Notes:** Categorizes moves (Excellent, Good, Inaccuracy, Mistake, Blunder) and generates natural-language explanations with top 3-move continuation lines.
-- **Interactive Board UI:** Sleek, dark-mode Pygame UI with move highlights, piece drag-and-drop, and a live evaluation bar.
+<!-- Demo: add a screenshot or GIF here, e.g. ![demo](docs/demo.gif) -->
 
-## Tech Stack
-- **Language:** Python 3.12+
-- **GUI & Board Logic:** `pygame-ce`, `python-chess`
-- **Engine:** Stockfish UCI Engine
-- **APIs:** Chess.com Public API, Google Gemini API
+## What it does
+- **Imports your games** from the Chess.com public API (most recent monthly archives).
+- **Analyzes each move with Stockfish** (UCI, depth 15) on a background thread, so the Pygame UI keeps rendering at 60 FPS while analysis runs.
+- **Labels move quality** (Excellent / Good / Inaccuracy / Mistake / Blunder) from centipawn swings and shows the engine's top 3-move continuation.
+- **Optional AI coaching notes** (`coach.py`) that turn engine output into plain-English explanations using the Google Gemini API.
 
-## Setup & Installation
+## Tech stack
+Python 3.12 · `pygame-ce` · `python-chess` · Stockfish (UCI) · Chess.com Public API · Google Gemini API (`google-genai`)
 
-1. **Install Stockfish (macOS Homebrew):**
-   ```bash
-   brew install stockfish
+## Project layout
+| File | Purpose |
+|---|---|
+| `main.py` | Pygame app: game list, board, eval bar, threaded Stockfish analysis |
+| `fetch_games.py` | Chess.com archive download |
+| `engine_eval.py` | Batch Stockfish evaluation of a game |
+| `coach.py` | Gemini-generated coaching text |
+| `database.py` | Syncs your full Chess.com archive into a local SQLite database |
+| `parse_sgn.py` | PGN parsing and board-history walk-through |
+| `analyze_game.py` | Per-move clock-time analysis from PGN `%clk` comments |
+| `test_api.py` | Quick Chess.com API connectivity check |
+
+## Run it
+```bash
+brew install stockfish            # or install Stockfish and update STOCKFISH_PATH in main.py
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+python main.py
+```
+Set `CHESS_COM_USERNAME` in `main.py` to your Chess.com username.
+For coaching notes, put `GEMINI_API_KEY=...` in a `.env` file (it's already in `.gitignore`).
