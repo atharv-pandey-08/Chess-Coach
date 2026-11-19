@@ -33,25 +33,15 @@ function toast(msg, bad = false) {
   toastTimer = setTimeout(() => (t.hidden = true), 3200);
 }
 
-const CLS_GLYPH = {
-  Brilliant: "!!", Great: "!", Best: "★", Excellent: "✓", Good: "✓", Book: "B",
-  Forced: "→", Inaccuracy: "?!", Mistake: "?", Blunder: "??",
-};
+// Standard chess annotation marks. Only moves worth a second look get one.
+const NAG = { Brilliant: "!!", Great: "!", Inaccuracy: "?!", Mistake: "?", Blunder: "??" };
 const CLS_ORDER = ["Brilliant", "Great", "Best", "Excellent", "Good", "Forced", "Inaccuracy", "Mistake", "Blunder"];
-const LIST_BADGES = new Set(["Brilliant", "Great", "Inaccuracy", "Mistake", "Blunder"]);
 const CLS_HL = {
   Brilliant: "rgba(38,194,181,.5)", Great: "rgba(91,143,240,.5)", Inaccuracy: "rgba(243,200,75,.5)",
   Mistake: "rgba(242,145,61,.5)", Blunder: "rgba(240,84,92,.5)",
 };
-const badge = (cls, extra = "") => cls ? `<span class="badge b-${cls} ${extra}" title="${cls}">${CLS_GLYPH[cls] || ""}</span>` : "";
+const nag = (cls) => NAG[cls] ? `<span class="nag t-${cls}" title="${cls}">${NAG[cls]}</span>` : "";
 
-const TC_ICON = {
-  bullet: '<svg viewBox="0 0 24 24" class="ico"><circle cx="15" cy="12" r="4"/><path d="M3 12h6M5 8h4M5 16h4"/></svg>',
-  blitz: '<svg viewBox="0 0 24 24" class="ico"><path d="M13 3 5 14h6l-1 7 8-11h-6z"/></svg>',
-  rapid: '<svg viewBox="0 0 24 24" class="ico"><circle cx="12" cy="13" r="8"/><path d="M12 9v4l2.5 2.5M10 2h4"/></svg>',
-  daily: '<svg viewBox="0 0 24 24" class="ico"><rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/></svg>',
-  imported: '<svg viewBox="0 0 24 24" class="ico"><path d="M12 4v12m0 0-4-4m4 4 4-4M5 20h14"/></svg>',
-};
 
 function relDate(ts) {
   if (!ts) return "";
@@ -107,24 +97,22 @@ const S = {
 // ---------------------------------------------------------------------------
 // Theme / sound
 // ---------------------------------------------------------------------------
-const ICON_SUN = '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/></svg>';
-const ICON_MOON = '<svg viewBox="0 0 24 24"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>';
-const ICON_SOUND = '<svg viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4zM15.5 8.5a5 5 0 0 1 0 7M19 5a10 10 0 0 1 0 14"/></svg>';
-const ICON_MUTE = '<svg viewBox="0 0 24 24"><path d="M11 5 6 9H2v6h4l5 4zM22 9l-6 6M16 9l6 6"/></svg>';
 
 function applyTheme(theme) {
   document.documentElement.dataset.theme = theme;
-  $("#theme-btn").innerHTML = theme === "light" ? ICON_MOON : ICON_SUN;
+  $$("#theme-seg button").forEach((b) => b.classList.toggle("on", b.dataset.v === theme));
   store.set("theme", theme);
+  if (S.data) renderGraph();
 }
-function applySound() { $("#sound-btn").innerHTML = S.sound ? ICON_SOUND : ICON_MUTE; }
+function applySound() { $("#opt-sound").checked = S.sound; }
 
-const BOARD_THEMES = { walnut: ["#ebd9b4", "#b08a62"], emerald: ["#eeeed2", "#6f9a5a"], slate: ["#dee3e6", "#8ca2ad"], ocean: ["#e3ecf4", "#5d84a8"], midnight: ["#9aa6b8", "#4b5568"] };
+const BOARD_THEMES = { walnut: ["#ebd9b4", "#b08a62"], green: ["#eeeed2", "#769656"], slate: ["#dee3e6", "#8ca2ad"], blue: ["#e3ecf4", "#6a8fb3"], grey: ["#d9d9d9", "#9a9a9a"] };
 function applyBoardTheme(name) {
+  if (!BOARD_THEMES[name]) name = "walnut";
   S.boardTheme = name;
   document.documentElement.dataset.board = name;
   store.set("boardTheme", name);
-  $$(".theme-sw").forEach((b) => b.classList.toggle("on", b.dataset.v === name));
+  $$(".swatch").forEach((b) => b.classList.toggle("on", b.dataset.v === name));
 }
 
 let audioCtx;
@@ -152,72 +140,52 @@ async function loadHome(username) {
   store.set("username", username);
   $("#user-input").value = username;
   $("#games-sub").textContent = "Fetching games from Chess.com…";
-  $("#games-list").innerHTML = Array.from({ length: 7 }, (_, i) => `<div class="skeleton" style="animation-delay:${i * 60}ms"></div>`).join("");
-  $("#profile-card").innerHTML = `<div class="skeleton" style="height:180px"></div>`;
-  $("#stats-card").innerHTML = "";
+  $("#games-list").innerHTML = Array.from({ length: 8 }, () => `<div class="skeleton"></div>`).join("");
+  $("#profile").innerHTML = "";
 
   const profileP = api(`/api/profile?username=${encodeURIComponent(username)}`).catch(() => null);
   try {
     const data = await api(`/api/games?username=${encodeURIComponent(username)}`);
     S.games = data.games;
     renderGames();
-    renderStats();
   } catch (e) {
     S.games = [];
     $("#games-sub").textContent = "";
-    $("#games-list").innerHTML = `<div class="card empty"><h3>Couldn't load games</h3><p>${esc(e.message)}</p></div>`;
-    $("#stats-card").innerHTML = "";
+    $("#games-list").innerHTML = `<div class="empty"><h3>Couldn't load games</h3><p>${esc(e.message)}</p></div>`;
   }
-  renderProfile(await profileP);
+  S.profile = await profileP;
+  renderProfile();
 }
 
-function renderProfile(p) {
-  const el = $("#profile-card");
-  if (!p) { el.innerHTML = ""; return; }
+function renderProfile() {
+  const p = S.profile, g = S.games, el = $("#profile");
+  if (!p && !g.length) { el.innerHTML = ""; return; }
   const labels = { bullet: "Bullet", blitz: "Blitz", rapid: "Rapid", daily: "Daily", puzzles: "Puzzles" };
-  const ratings = Object.entries(p.ratings || {}).map(([k, r]) => `
-    <div class="rating">
-      <div class="rating-k">${TC_ICON[k] || TC_ICON.rapid}${labels[k] || k}</div>
-      <div class="rating-v">${r.rating ?? "—"}</div>
-      ${r.best ? `<div class="rating-best">Best ${r.best}</div>` : ""}
-    </div>`).join("");
-  el.innerHTML = `
-    <div class="profile-top">
-      ${p.avatar ? `<img class="avatar" src="${esc(p.avatar)}" alt="" />` : `<div class="avatar">${esc((p.username || "?")[0].toUpperCase())}</div>`}
+  const name = p?.username || S.username;
+  const who = `
+    <div class="who">
+      ${p?.avatar ? `<img class="avatar" src="${esc(p.avatar)}" alt="" />` : `<div class="avatar">${esc((name || "?")[0].toUpperCase())}</div>`}
       <div>
-        <div class="profile-name">${p.title ? `<span class="title-tag">${esc(p.title)}</span>` : ""}${esc(p.username)}</div>
-        <a class="profile-link" href="https://www.chess.com/member/${encodeURIComponent(p.username)}" target="_blank" rel="noopener">chess.com/member/${esc(p.username)} ↗</a>
+        <div class="who-name">${p?.title ? `<span class="title-tag">${esc(p.title)}</span>` : ""}${esc(name)}</div>
+        <a class="who-link" href="https://www.chess.com/member/${encodeURIComponent(name)}" target="_blank" rel="noopener">chess.com profile ↗</a>
       </div>
-    </div>
-    <div class="ratings">${ratings || `<p class="muted">No ratings available.</p>`}</div>`;
-}
-
-function renderStats() {
-  const g = S.games;
-  if (!g.length) { $("#stats-card").innerHTML = ""; return; }
-  const w = g.filter((x) => x.result === "Win").length, l = g.filter((x) => x.result === "Loss").length, d = g.length - w - l;
-  const analyzed = g.filter((x) => x.accuracy != null);
-  const avgAcc = analyzed.length ? (analyzed.reduce((a, x) => a + x.accuracy, 0) / analyzed.length).toFixed(1) : null;
-  const openings = {};
-  g.forEach((x) => { if (x.opening) { const k = x.opening.split(" ").slice(0, 3).join(" "); openings[k] = (openings[k] || 0) + 1; } });
-  const topOpening = Object.entries(openings).sort((a, b) => b[1] - a[1])[0];
-  const bestWin = g.filter((x) => x.result === "Win" && x.opponent_rating).sort((a, b) => b.opponent_rating - a.opponent_rating)[0];
-  let streak = 0; const first = g[0].result;
-  for (const x of g) { if (x.result === first) streak++; else break; }
-  const pct = (n) => (100 * n / g.length).toFixed(1);
-
-  $("#stats-card").innerHTML = `
-    <h3>Last ${g.length} games</h3>
-    <div style="display:flex;align-items:baseline;gap:10px"><span class="big-number">${Math.round(100 * w / g.length)}%</span><span class="muted">win rate</span></div>
-    <div class="wld"><span style="width:${pct(w)}%;background:var(--win)"></span><span style="width:${pct(d)}%;background:var(--draw)"></span><span style="width:${pct(l)}%;background:var(--loss)"></span></div>
-    <div class="wld-legend"><span><i class="dot" style="background:var(--win)"></i><b>${w}</b> W</span><span><i class="dot" style="background:var(--draw)"></i><b>${d}</b> D</span><span><i class="dot" style="background:var(--loss)"></i><b>${l}</b> L</span></div>
-    <div class="stat-rows">
-      <div class="stat-row"><span>Avg. accuracy</span><b>${avgAcc ? `${avgAcc}%` : "Review a game"}${avgAcc ? ` <span class="muted" style="font-weight:500">(${analyzed.length})</span>` : ""}</b></div>
-      <div class="stat-row"><span>Current streak</span><b class="${first === "Win" ? "t-Best" : first === "Loss" ? "t-Blunder" : ""}">${streak} ${first.toLowerCase()}${streak > 1 && first !== "Loss" ? "s" : streak > 1 ? "es" : ""}</b></div>
-      ${topOpening ? `<div class="stat-row"><span>Favourite opening</span><b title="${esc(topOpening[0])}">${esc(topOpening[0])}</b></div>` : ""}
-      ${bestWin ? `<div class="stat-row"><span>Best win</span><b>${esc(bestWin.opponent)} (${bestWin.opponent_rating})</b></div>` : ""}
     </div>`;
+  const ratings = Object.entries(p?.ratings || {}).filter(([, r]) => r.rating).map(([k, r]) => `
+    <div class="rating"><span class="rating-k">${labels[k] || k}</span><span class="rating-v">${r.rating}</span></div>`).join("");
+
+  let record = "";
+  if (g.length) {
+    const w = g.filter((x) => x.result === "Win").length, l = g.filter((x) => x.result === "Loss").length, d = g.length - w - l;
+    const pct = (n) => (100 * n / g.length).toFixed(2);
+    record = `
+      <div class="record">
+        <div class="record-top"><span>Last ${g.length} games</span><span><b>${w}</b> won · <b>${d}</b> drawn · <b>${l}</b> lost</span></div>
+        <div class="wld"><span style="width:${pct(w)}%;background:var(--win)"></span><span style="width:${pct(d)}%;background:var(--draw)"></span><span style="width:${pct(l)}%;background:var(--loss)"></span></div>
+      </div>`;
+  }
+  el.innerHTML = who + (ratings ? `<div class="ratings">${ratings}</div>` : "") + record;
 }
+
 
 function renderGames() {
   const { tc, res, q } = S.filters;
@@ -228,25 +196,22 @@ function renderGames() {
     (!needle || g.opponent.toLowerCase().includes(needle) || (g.opening || "").toLowerCase().includes(needle)));
 
   $("#games-sub").textContent = S.games.length
-    ? `${list.length} of ${S.games.length} games · ${S.username}`
+    ? (list.length === S.games.length ? `${list.length} games` : `${list.length} of ${S.games.length} games`)
     : `No games found for ${S.username}`;
 
   if (!list.length) {
-    $("#games-list").innerHTML = `<div class="card empty"><h3>No games match</h3><p>Try a different filter${S.games.length ? "" : " or username"}.</p></div>`;
+    $("#games-list").innerHTML = `<div class="empty"><h3>No games match</h3><p>Try a different filter${S.games.length ? "" : " or username"}.</p></div>`;
     return;
   }
-  $("#games-list").innerHTML = list.map((g, i) => `
-    <button class="game-row" data-id="${esc(g.id)}" style="animation-delay:${Math.min(i, 14) * 22}ms">
-      <span class="res-stripe" style="background:var(--${g.result.toLowerCase()})"></span>
-      <span class="res-badge res-${g.result}">${g.result === "Draw" ? "½" : g.result[0]}</span>
-      <span class="g-opp">
-        <span class="g-opp-name"><span class="color-chip ${g.user_color}" title="You played ${g.user_color}"></span>${esc(g.opponent)} <span class="muted" style="font-weight:500">${g.opponent_rating ?? ""}</span></span>
-        <span class="g-opp-meta">${relDate(g.end_time)} · ${esc(g.termination ? g.termination.replace(/^.*? won /, "won ").replace(/^.*?\b(drawn|game abandoned)\b/i, "$1") : g.result_detail)}</span>
-      </span>
-      <span class="g-open" title="${esc(g.opening)}">${esc(g.opening || "—")}</span>
-      <span class="g-tc">${TC_ICON[g.time_class] || TC_ICON.rapid}${esc(fmtTC(g.time_control) || g.time_class)}</span>
-      ${g.accuracy != null ? `<span class="acc-pill" title="Your accuracy">${g.accuracy.toFixed(1)}%</span>` : `<span class="acc-pill none">Review</span>`}
-      <span class="go"><svg viewBox="0 0 24 24"><path d="m9 6 6 6-6 6"/></svg></span>
+  const word = { Win: "Won", Loss: "Lost", Draw: "Draw" };
+  $("#games-list").innerHTML = list.map((g) => `
+    <button class="game-row" data-id="${esc(g.id)}">
+      <span class="res res-${g.result}">${word[g.result] || g.result}</span>
+      <span class="g-opp"><span class="side-dot ${g.user_color}" title="You played ${g.user_color}"></span>${esc(g.opponent)}<span class="r">${g.opponent_rating ?? ""}</span></span>
+      <span class="g-open" title="${esc(g.opening)}">${esc(g.opening || "")}</span>
+      <span class="g-tc">${esc(fmtTC(g.time_control) || g.time_class)}</span>
+      <span class="g-acc ${g.accuracy == null ? "none" : ""}" title="Your accuracy">${g.accuracy != null ? g.accuracy.toFixed(1) : "–"}</span>
+      <span class="g-date">${relDate(g.end_time)}</span>
     </button>`).join("");
 }
 
@@ -264,7 +229,6 @@ async function openReview(id) {
   $("#coach-card").innerHTML = "";
   $("#moves").innerHTML = "";
   $("#graph").innerHTML = "";
-  $("#report").innerHTML = "";
   await pollReview(true);
 }
 
@@ -309,25 +273,22 @@ function renderProgress() {
     return;
   }
   const pct = d.total ? Math.round(100 * d.progress / d.total) : 0;
-  $("#progress-text").textContent = d.status === "queued" ? "Starting Stockfish…" : `Analyzing with Stockfish · depth ${S.cfg?.depth ?? ""}`;
-  $("#progress-pct").textContent = `${d.progress}/${d.total}`;
+  $("#progress-text").textContent = d.status === "queued" ? "Starting Stockfish…" : "Stockfish is analyzing the game";
+  $("#progress-pct").textContent = `${d.progress} / ${d.total}`;
   $("#progress-fill").style.width = pct + "%";
 }
 
 function renderGameHead() {
   const g = S.data.game;
   const date = g.end_time ? new Date(g.end_time * 1000).toLocaleDateString(undefined, { month: "short", day: "numeric", year: "numeric" }) : "";
+  const word = { Win: "Won", Loss: "Lost", Draw: "Draw" };
   $("#game-head").innerHTML = `
-    <a href="#/" class="back-link">← All games</a>
-    <div class="gh-top">
-      <div style="min-width:0">
-        <div class="gh-title">vs ${esc(g.opponent)} <span class="res-badge res-${g.result}" style="display:inline-grid;width:auto;height:auto;padding:2px 8px;border-radius:7px;font-size:12px;margin-left:6px;vertical-align:2px">${g.result}</span></div>
-        <div class="gh-sub">${[g.time_class !== "imported" ? `${fmtTC(g.time_control)} ${g.time_class}` : "Imported", date, g.opening].filter(Boolean).map(esc).join(" · ")}</div>
-      </div>
-      <div class="gh-links">
-        ${g.url ? `<a href="${esc(g.url)}" target="_blank" rel="noopener" title="Open on Chess.com">Chess.com ↗</a>` : ""}
-        <button id="copy-pgn" title="Copy PGN">PGN</button>
-      </div>
+    <a href="#/" class="back-link">← Games</a>
+    <div class="gh-title"><span>vs ${esc(g.opponent)}</span><span class="res res-${g.result}">${word[g.result] || g.result}</span></div>
+    <div class="gh-sub">${[g.time_class !== "imported" ? `${fmtTC(g.time_control)} ${g.time_class}` : "Imported game", date].filter(Boolean).map(esc).join(" · ")}</div>
+    <div class="gh-links">
+      ${g.url ? `<a href="${esc(g.url)}" target="_blank" rel="noopener">Open on Chess.com</a>` : ""}
+      <button id="copy-pgn">Copy PGN</button>
     </div>`;
   $("#copy-pgn").onclick = () => navigator.clipboard.writeText(S.data.pgn).then(() => toast("PGN copied"), () => toast("Couldn't copy", true));
 }
@@ -405,9 +366,9 @@ function renderBoard() {
     const [x, y] = sqToXY(sq);
     html += `<div class="piece" data-sq="${sq}" style="background-image:url(/pieces/${code}.png);transform:translate(${x * 100}%,${y * 100}%)"></div>`;
   }
-  if (move?.classification) {
+  if (NAG[move?.classification]) {
     const [x, y] = sqToXY(move.to);
-    html += `<div class="badge-sq" style="left:${x * 12.5}%;top:${y * 12.5}%">${badge(move.classification)}</div>`;
+    html += `<div class="badge-sq" style="left:${x * 12.5}%;top:${y * 12.5}%"><span class="nag-dot bg-${move.classification}">${NAG[move.classification]}</span></div>`;
   }
   layer.innerHTML = html;
 
@@ -469,15 +430,9 @@ function renderArrows(move, pos) {
 }
 
 function renderEvalBar(ev) {
-  const fill = $("#evalbar-fill"), label = $("#evalbar-label");
-  if (!ev) { fill.style.height = "50%"; label.textContent = ""; return; }
-  fill.style.height = ev.wp + "%";
-  const whiteAhead = ev.wp >= 50;
-  label.textContent = ev.text.replace(/^\+/, "");
-  // put the label at the leading side's end of the bar
-  const atTop = whiteAhead === S.flipped;
-  label.classList.toggle("top", atTop);
-  label.style.color = whiteAhead ? "#333" : "#eee";
+  const fill = $("#evalbar-fill"), bar = $("#evalbar");
+  fill.style.height = (ev ? ev.wp : 50) + "%";
+  bar.title = ev ? `Evaluation ${ev.text}` : "";
 }
 
 const VALUES = { p: 1, n: 3, b: 3, r: 5, q: 9, k: 0 };
@@ -489,8 +444,8 @@ function renderPlayerBars(pieces) {
   const material = (c) => Object.entries(counts[c]).reduce((a, [t, n]) => a + VALUES[t] * n, 0);
   const diff = material("w") - material("b");
   const base = (() => { const tc = g.time_control || ""; return /^\d+/.test(tc) && !tc.includes("/") ? +tc.split("+")[0] : null; })();
-  const sideToMove = S.data.review.positions[S.ply].fen.split(" ")[1];
-  const over = S.ply === moves.length;
+  const sideToMove = boardView().pos.fen.split(" ")[1];
+  const over = S.ply === moves.length && !S.variation;
 
   const bar = (color) => {
     const c = color[0], opp = c === "w" ? "b" : "w", info = g[color];
@@ -505,11 +460,11 @@ function renderPlayerBars(pieces) {
     if (clock == null && moves.some((m) => m.clock != null)) clock = base;
     const active = !over && sideToMove === c;
     const low = clock != null && (clock < 20 || (base && clock < base * 0.1));
-    const isUser = g.user_color === color;
+    const isUser = g.user_color === color && g.time_class !== "imported";
     return `
-      <span class="pb-avatar ${color}">${esc((info.name || "?")[0].toUpperCase())}</span>
-      <span class="pb-name">${esc(info.name)}${isUser && g.time_class !== "imported" ? ' <span class="muted" style="font-weight:500">(you)</span>' : ""}</span>
-      <span class="pb-rating">${info.rating ? `(${info.rating})` : ""}</span>
+      <span class="pb-name">${esc(info.name)}</span>
+      ${info.rating ? `<span class="pb-rating">${info.rating}</span>` : ""}
+      ${isUser ? `<span class="pb-you">you</span>` : ""}
       <span class="pb-captured">${captured}${adv > 0 ? `<span class="adv">+${adv}</span>` : ""}</span>
       ${clock != null ? `<span class="pb-clock ${active ? "active" : ""} ${low ? "low" : ""}">${fmtClock(clock)}</span>` : ""}`;
   };
@@ -520,8 +475,6 @@ function renderPlayerBars(pieces) {
 
 // ----- side panel ------------------------------------------------------------
 const plyLabel = (m) => `${m.number}${m.color === "white" ? "." : "…"} ${m.san}`;
-const VERDICT = { Best: "best", Forced: "forced", Great: "a great move", Brilliant: "brilliant", Book: "book" };
-const verdictText = (c) => VERDICT[c] || `${/^[AEIOU]/.test(c) ? "an" : "a"} ${c.toLowerCase()}`;
 
 function renderCoach() {
   const d = S.data, r = d.review, el = $("#coach-card");
@@ -529,9 +482,8 @@ function renderCoach() {
   const m = r.moves[S.ply - 1], pos = r.positions[S.ply];
   if (!m.classification) {
     el.innerHTML = `
-      <div class="coach-head"><span class="spinner"></span>
-        <div class="coach-title"><span class="san">${esc(plyLabel(m))}</span></div></div>
-      <p class="coach-text muted">Waiting for Stockfish to reach this move…</p>`;
+      <div class="coach-head"><span class="coach-move">${esc(plyLabel(m))}</span></div>
+      <p class="coach-text muted"><span class="spinner"></span> Waiting for Stockfish to reach this move…</p>`;
     return;
   }
   const key = `${S.gameId}:${S.ply}`;
@@ -541,18 +493,16 @@ function renderCoach() {
 
   const head = `
     <div class="coach-head">
-      ${badge(m.classification)}
-      <div style="min-width:0">
-        <div class="coach-title"><span class="san">${esc(plyLabel(m))}</span> is <span class="t-${m.classification}">${verdictText(m.classification)}</span></div>
-        <div class="coach-meta">${who}${m.time_spent != null ? ` · ${m.time_spent}s` : ""}</div>
-      </div>
-      ${pos.eval ? `<span class="coach-eval ${pos.eval.wp >= 50 ? "w" : "b"}">${esc(pos.eval.text)}</span>` : ""}
-    </div>`;
+      <span class="coach-move">${esc(plyLabel(m))}${nag(m.classification)}</span>
+      <span class="coach-verdict t-${m.classification}">${esc(m.classification)}</span>
+      ${pos.eval ? `<span class="coach-eval" title="Engine evaluation">${esc(pos.eval.text)}</span>` : ""}
+    </div>
+    <div class="coach-meta">${who}${m.time_spent != null ? ` · ${m.time_spent}s on the clock` : ""}</div>`;
 
   let body;
   if (!r.complete || !c || c === "loading" || c.error) {
     // The quick rule-based comment, until the full coach note arrives.
-    body = `<p class="coach-text">${esc(m.comment)}</p>${r.complete && c === "loading" ? `<p class="coach-sub muted"><span class="spinner"></span> Checking the position…</p>` : ""}`;
+    body = `<p class="coach-text">${esc(m.comment)}</p>${r.complete && c === "loading" ? `<p class="coach-text muted small"><span class="spinner"></span> Checking the position…</p>` : ""}`;
   } else {
     const n = c.note;
     body = `
@@ -659,31 +609,54 @@ function bindVariationBar(root) {
 
 // ----- the game story (shown at the start position) --------------------------
 function renderStory(el) {
-  const d = S.data, r = d.review, g = d.game, s = r.summary[g.user_color];
-  const head = `<div class="coach-head"><div style="min-width:0">
-      <div class="coach-title">${esc(g.opening || "Starting position")}</div>
-      <div class="coach-meta">${Math.ceil(r.moves.length / 2)} moves${r.complete && s.accuracy != null ? ` · your accuracy ${s.accuracy}%` : ""}</div></div></div>`;
+  const d = S.data, r = d.review, g = d.game, sum = r.summary;
+  const you = g.user_color, them = you === "white" ? "black" : "white";
+  const head = `
+    <div class="coach-head"><span class="coach-move title">${esc(g.opening || "Game summary")}</span></div>
+    <div class="coach-meta">${Math.ceil(r.moves.length / 2)} moves</div>`;
   if (!r.complete) {
-    el.innerHTML = head + `<p class="coach-text muted">Stockfish is reviewing the game. You can step through the moves with ← → while it works.</p>`;
+    el.innerHTML = head + `<p class="coach-text muted">Stockfish is reviewing the game. Step through the moves with ← → while it works; verdicts appear as each move is analyzed.</p>`;
     return;
   }
+  const acc = `
+    <div class="acc-pair">
+      <div><b>${sum[you].accuracy ?? "–"}</b><span>Your accuracy</span></div>
+      <div><b>${sum[them].accuracy ?? "–"}</b><span>${esc(sum[them].name || "Opponent")}</span></div>
+    </div>`;
+
   const st = S.story[S.gameId];
-  if (st === undefined) { loadStory(false); }
+  if (st === undefined) loadStory(false);
+  let story;
   if (!st || st === "loading" || st.error) {
-    el.innerHTML = head + `<p class="coach-text muted">${st?.error ? esc(st.error) : `<span class="spinner"></span> Finding the moments that decided the game…`}</p>`;
-    return;
+    story = `<p class="coach-text muted">${st?.error ? esc(st.error) : `<span class="spinner"></span> Finding the moments that decided the game…`}</p>`;
+  } else {
+    const pts = st.turning_points.map((p) => `
+      <button class="tp" data-ply="${p.ply}">
+        <div class="tp-top"><span class="tp-move">${esc(p.numbered)}${nag(p.classification)}</span><span class="tp-who">${p.is_user ? "You" : esc(g.opponent)}</span></div>
+        <div class="tp-text">${esc(p.key_point)}</div>
+      </button>`).join("");
+    const text = st.ai ? `<p class="coach-text">${esc(st.ai.summary)}</p><p class="coach-lesson">${esc(st.ai.lesson)}</p>`
+      : `<p class="coach-text">${esc(st.turning_points.length ? st.summary.split(". ")[0] + "." : st.summary)}</p>`;
+    const aiState = S.story[S.gameId + ":ai"];
+    const foot = st.ai ? `<div class="coach-foot"><span>Written by AI · fact-checked</span></div>`
+      : S.cfg?.ai && st.turning_points.length ? `<div class="coach-foot"><span>From engine analysis</span>${aiState === "loading"
+        ? `<button class="link-btn" disabled><span class="spinner"></span> Writing…</button>` : `<button class="link-btn" id="story-ai">Tell the story with AI</button>`}</div>` : "";
+    story = text + (pts ? `<div class="tps">${pts}</div>` : "") + foot;
   }
-  const pts = st.turning_points.map((p) => `
-    <button class="tp" data-ply="${p.ply}">${badge(p.classification)}
-      <span class="tp-main"><span class="san">${esc(p.numbered)}</span><span class="tp-who">${p.is_user ? "You" : esc(g.opponent)}</span></span>
-      <span class="tp-text">${esc(p.key_point)}</span></button>`).join("");
-  const aiState = S.story[S.gameId + ":ai"];
-  const text = st.ai ? `<p class="coach-text">${esc(st.ai.summary)}</p><p class="coach-lesson">${esc(st.ai.lesson)}</p>`
-    : `<p class="coach-text">${esc(st.turning_points.length ? st.summary.split(". ")[0] + "." : st.summary)}</p>`;
-  const foot = st.ai ? `<div class="coach-foot"><span>Written by AI · fact-checked</span></div>`
-    : S.cfg?.ai && st.turning_points.length ? `<div class="coach-foot"><span>From engine analysis</span>${aiState === "loading"
-      ? `<button class="link-btn" disabled><span class="spinner"></span> Writing…</button>` : `<button class="link-btn" id="story-ai">Tell the story with AI</button>`}</div>` : "";
-  el.innerHTML = head + text + (pts ? `<div class="tps">${pts}</div>` : "") + foot;
+
+  const rows = CLS_ORDER.map((c) => {
+    const a = sum[you].counts[c] || 0, b = sum[them].counts[c] || 0;
+    return `<tr class="${a + b ? "" : "zero"}"><td class="t-${c}">${c}</td><td>${a}</td><td>${b}</td></tr>`;
+  }).join("");
+  const ph = sum.phases;
+  const details = `
+    <details class="details">
+      <summary>Move breakdown</summary>
+      <table class="counts"><tr><th></th><th>You</th><th>${esc(sum[them].name || "Opponent")}</th></tr>${rows}</table>
+      <div class="phases">${["opening", "middlegame", "endgame"].map((k) => `<span>${k[0].toUpperCase() + k.slice(1)} <b>${ph[k] ?? "–"}</b></span>`).join("")}</div>
+    </details>`;
+
+  el.innerHTML = head + acc + story + details;
   el.querySelectorAll(".tp").forEach((b) => (b.onclick = () => goTo(+b.dataset.ply)));
   const sb = $("#story-ai");
   if (sb) sb.onclick = () => loadStory(true);
@@ -712,20 +685,19 @@ function renderMoves(scroll = true) {
     html += `<li><span class="mv-num">${moves[i].number}.</span>`;
     for (const m of [moves[i], moves[i + 1]]) {
       if (!m) { html += "<span></span>"; continue; }
-      const b = LIST_BADGES.has(m.classification) ? badge(m.classification) : `<span class="ph"></span>`;
-      html += `<button class="mv ${m.ply === S.ply ? "cur" : ""}" data-ply="${m.ply}">${b}<span>${esc(m.san)}</span>${m.time_spent != null ? `<span class="t">${m.time_spent}s</span>` : ""}</button>`;
+      html += `<button class="mv ${m.ply === S.ply ? "cur" : ""}" data-ply="${m.ply}"><span>${esc(m.san)}</span>${nag(m.classification)}${m.time_spent != null ? `<span class="t">${m.time_spent}s</span>` : ""}</button>`;
     }
     html += "</li>";
   }
   const res = S.data.review.headers.Result;
   if (res && res !== "*") html += `<li><span class="mv-result">${esc(res)}${S.data.game.termination ? ` · ${esc(S.data.game.termination)}` : ""}</span></li>`;
-  const top = list.parentElement.scrollTop;
+  const box = list.parentElement, top = box.scrollTop;
   list.innerHTML = html;
-  list.parentElement.scrollTop = top;
+  box.scrollTop = top;
   if (scroll) {
     const cur = list.querySelector(".mv.cur");
     if (cur) {
-      const box = list.parentElement, cb = cur.getBoundingClientRect(), bb = box.getBoundingClientRect();
+      const cb = cur.getBoundingClientRect(), bb = box.getBoundingClientRect();
       if (cb.top < bb.top + 8 || cb.bottom > bb.bottom - 8) box.scrollTop += cb.top - bb.top - bb.height / 2 + cb.height / 2;
     }
   }
@@ -733,53 +705,28 @@ function renderMoves(scroll = true) {
 
 function renderGraph() {
   const svg = $("#graph"), r = S.data.review;
-  const W = svg.clientWidth || 400, H = svg.clientHeight || 96;
+  const W = svg.clientWidth || 400, H = svg.clientHeight || 56;
+  const css = getComputedStyle(document.documentElement);
+  const v = (name) => css.getPropertyValue(name).trim();
   svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
   const n = r.positions.length - 1 || 1;
   const x = (i) => (i / n) * W, y = (wp) => H - (wp / 100) * H;
   const pts = r.positions.map((p, i) => (p.eval ? [x(i), y(p.eval.wp)] : null)).filter(Boolean);
-  let body = `<rect width="${W}" height="${H}" fill="#2b303a"/>`;
+  let body = `<rect width="${W}" height="${H}" fill="${v("--graph-bg")}"/>`;
   if (pts.length) {
     const area = `M0,${H} ` + pts.map(([a, b]) => `L${a.toFixed(1)},${b.toFixed(1)}`).join(" ") + ` L${pts[pts.length - 1][0].toFixed(1)},${H} Z`;
-    body += `<path d="${area}" fill="#e9ecf1"/>`;
+    body += `<path d="${area}" fill="${v("--graph-fg")}"/>`;
   }
-  body += `<line x1="0" x2="${W}" y1="${H / 2}" y2="${H / 2}" stroke="#7d8699" stroke-opacity=".5" stroke-dasharray="3 4"/>`;
+  body += `<line x1="0" x2="${W}" y1="${H / 2}" y2="${H / 2}" stroke="${v("--muted")}" stroke-opacity=".45" stroke-dasharray="2 4"/>`;
   r.moves.forEach((m) => {
-    if (["Blunder", "Mistake", "Brilliant", "Great"].includes(m.classification) && r.positions[m.ply].eval) {
-      body += `<circle cx="${x(m.ply)}" cy="${y(r.positions[m.ply].eval.wp)}" r="3.6" fill="var(--c-${m.classification.toLowerCase()})" stroke="#111" stroke-width="1"/>`;
+    if (["Blunder", "Mistake", "Brilliant"].includes(m.classification) && r.positions[m.ply].eval) {
+      body += `<circle cx="${x(m.ply)}" cy="${y(r.positions[m.ply].eval.wp)}" r="3" fill="${v(`--c-${m.classification.toLowerCase()}`)}"/>`;
     }
   });
-  body += `<line x1="${x(S.ply)}" x2="${x(S.ply)}" y1="0" y2="${H}" stroke="var(--accent)" stroke-width="2"/>`;
+  body += `<line x1="${x(S.ply)}" x2="${x(S.ply)}" y1="0" y2="${H}" stroke="${v("--focus")}" stroke-width="1.5"/>`;
   svg.innerHTML = body;
 }
 
-function renderReport() {
-  const r = S.data.review, g = S.data.game, s = r.summary, el = $("#report");
-  if (!r.complete) {
-    el.innerHTML = `<div class="empty" style="padding:30px 10px"><div class="spinner" style="margin:0 auto 12px;color:var(--accent)"></div>The game report is ready once Stockfish finishes (${r.analyzed}/${r.total}).</div>`;
-    return;
-  }
-  const rows = CLS_ORDER.map((c) => {
-    const w = s.white.counts[c] || 0, b = s.black.counts[c] || 0;
-    return `<tr class="${w + b ? "" : "zero"}"><td>${w}</td><td><span class="lbl">${badge(c)}<span class="t-${c}">${c}</span></span></td><td>${b}</td></tr>`;
-  }).join("");
-  const ph = s.phases;
-  const moments = s.key_moments.map((p) => r.moves[p - 1]).map((m) => `
-    <button class="moment" data-ply="${m.ply}">${badge(m.classification)}
-      <span class="san">${m.number}${m.color === "white" ? "." : "…"} ${esc(m.san)}</span>
-      <span class="t-${m.classification}" style="font-size:12.5px;font-weight:600">${m.classification}</span>
-      <span class="who">${m.is_user ? "You" : esc(g.opponent)}</span></button>`).join("");
-  el.innerHTML = `
-    <div class="acc-row">
-      <div class="acc-box white"><div class="n">${s.white.accuracy ?? "—"}</div><div class="l">${esc(s.white.name)}${g.user_color === "white" ? " (you)" : ""}</div></div>
-      <span class="acc-vs">ACCURACY</span>
-      <div class="acc-box black"><div class="n">${s.black.accuracy ?? "—"}</div><div class="l">${esc(s.black.name)}${g.user_color === "black" ? " (you)" : ""}</div></div>
-    </div>
-    <table class="cls-table">${rows}</table>
-    <div class="rep-h">Your accuracy by phase</div>
-    <div class="phase-row">${["opening", "middlegame", "endgame"].map((k) => `<div class="phase"><div class="k">${k}</div><div class="v">${ph[k] ?? "—"}</div></div>`).join("")}</div>
-    ${moments ? `<div class="rep-h">Key moments</div>${moments}` : ""}`;
-}
 
 function renderAll(scroll = true) {
   if (!S.data) return;
@@ -788,8 +735,6 @@ function renderAll(scroll = true) {
   renderCoach();
   renderMoves(scroll);
   renderGraph();
-  if (!$("#tab-report").hidden) renderReport();
-  $$('.ctl[data-act="arrows"]').forEach((b) => b.classList.toggle("on", S.arrows));
 }
 
 function goTo(ply) {
@@ -804,12 +749,12 @@ function stopPlay() {
   clearInterval(S.playTimer);
   S.playTimer = null;
   const b = $('.ctl[data-act="play"]');
-  if (b) b.innerHTML = '<svg viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>';
+  if (b) b.innerHTML = '<svg viewBox="0 0 24 24" class="fill"><path d="M8 5v14l11-7z"/></svg>';
 }
 function togglePlay() {
   if (S.playTimer) return stopPlay();
   if (S.ply >= S.data.review.moves.length) goTo(0);
-  $('.ctl[data-act="play"]').innerHTML = '<svg viewBox="0 0 24 24"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
+  $('.ctl[data-act="play"]').innerHTML = '<svg viewBox="0 0 24 24" class="fill"><path d="M7 5h4v14H7zM13 5h4v14h-4z"/></svg>';
   S.playTimer = setInterval(() => {
     if (S.ply >= S.data.review.moves.length) return stopPlay();
     goTo(S.ply + 1);
@@ -826,7 +771,7 @@ function control(act) {
     case "last": goTo(S.data.review.moves.length); break;
     case "play": togglePlay(); break;
     case "flip": S.flipped = !S.flipped; buildSquares(); S.prevPly = S.ply; renderAll(false); break;
-    case "arrows": S.arrows = !S.arrows; store.set("arrows", S.arrows); renderAll(false); break;
+    case "arrows": S.arrows = !S.arrows; store.set("arrows", S.arrows); $("#opt-arrows").checked = S.arrows; renderAll(false); break;
   }
 }
 
@@ -848,7 +793,7 @@ function route() {
     $("#review-view").hidden = true;
     $("#home-view").hidden = false;
     if (!S.games.length && S.username) loadHome(S.username);
-    else renderGames(), renderStats();
+    else renderGames(), renderProfile();
   }
 }
 
@@ -889,11 +834,6 @@ function bind() {
     const b = e.target.closest(".mv");
     if (b) { stopPlay(); goTo(+b.dataset.ply); }
   });
-  $("#report").addEventListener("click", (e) => {
-    const b = e.target.closest(".moment");
-    if (b) { switchTab("analysis"); goTo(+b.dataset.ply); }
-  });
-  $$(".tab").forEach((t) => t.addEventListener("click", () => switchTab(t.dataset.tab)));
 
   // graph scrubbing
   const graph = $("#graph"), tip = $("#graph-tip");
@@ -934,12 +874,14 @@ function bind() {
     if (map[e.key]) { e.preventDefault(); control(map[e.key]); }
   });
 
-  $("#theme-btn").onclick = () => applyTheme(document.documentElement.dataset.theme === "light" ? "dark" : "light");
-  $("#sound-btn").onclick = () => { S.sound = !S.sound; store.set("sound", S.sound); applySound(); };
-
+  // settings menu
+  $("#theme-seg").addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) applyTheme(b.dataset.v); });
+  $("#opt-sound").addEventListener("change", (e) => { S.sound = e.target.checked; store.set("sound", S.sound); });
+  $("#opt-arrows").addEventListener("change", (e) => { S.arrows = e.target.checked; store.set("arrows", S.arrows); if (S.data) renderBoard(); });
   $("#board-themes").innerHTML = Object.entries(BOARD_THEMES).map(([k, [l, d]]) =>
-    `<button class="theme-sw" data-v="${k}" title="${k}"><i style="background:${l}"></i><i style="background:${d}"></i><i style="background:${d}"></i><i style="background:${l}"></i></button>`).join("");
-  $("#board-themes").addEventListener("click", (e) => { const b = e.target.closest(".theme-sw"); if (b) applyBoardTheme(b.dataset.v); });
+    `<button class="swatch" data-v="${k}" title="${k}" aria-label="${k} board"><i style="background:${l}"></i><i style="background:${d}"></i><i style="background:${d}"></i><i style="background:${l}"></i></button>`).join("");
+  $("#board-themes").addEventListener("click", (e) => { const b = e.target.closest(".swatch"); if (b) applyBoardTheme(b.dataset.v); });
+  document.addEventListener("click", (e) => { const m = $("#settings"); if (m.open && !m.contains(e.target)) m.open = false; });
 
   // PGN import
   const dlg = $("#import-dialog");
@@ -964,13 +906,6 @@ function bind() {
   window.addEventListener("hashchange", route);
 }
 
-function switchTab(name) {
-  $$(".tab").forEach((t) => t.classList.toggle("on", t.dataset.tab === name));
-  $("#tab-analysis").hidden = name !== "analysis";
-  $("#tab-report").hidden = name !== "report";
-  if (name === "report") renderReport();
-  else if (S.data) renderGraph();
-}
 
 async function init() {
   applyTheme(store.get("theme", window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark"));
@@ -982,10 +917,11 @@ async function init() {
   } catch {
     S.cfg = { username: "", engine: false, ai: false };
   }
-  const pill = $("#engine-pill");
-  pill.classList.add(S.cfg.engine ? "ok" : "bad");
-  pill.querySelector("span").textContent = S.cfg.engine ? `Stockfish · d${S.cfg.depth}` : "No engine";
-  pill.title = S.cfg.engine ? S.cfg.engine_path : "Stockfish not found. Install it with: brew install stockfish";
+  $("#engine-banner").hidden = !!S.cfg.engine;
+  $("#engine-note").textContent = S.cfg.engine
+    ? `Stockfish, depth ${S.cfg.depth}` + (S.cfg.ai ? " · AI coach on" : " · AI coach off (no API key)")
+    : "Stockfish not found";
+  $("#opt-arrows").checked = S.arrows;
 
   const params = new URLSearchParams(location.search);
   S.username = params.get("u") || store.get("username", "") || S.cfg.username || "";
@@ -996,7 +932,7 @@ async function init() {
     loadHome(S.username);
   } else {
     $("#games-sub").textContent = "";
-    $("#games-list").innerHTML = `<div class="card empty"><h3>Welcome!</h3><p>Enter your Chess.com username above to load your games.</p></div>`;
+    $("#games-list").innerHTML = `<div class="empty"><h3>Welcome</h3><p>Enter your Chess.com username above to load your games.</p></div>`;
   }
 }
 
