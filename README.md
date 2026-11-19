@@ -1,21 +1,115 @@
-# Personal Chess AI Coach
+# ♞ Personal Chess Coach
 
-A desktop chess game reviewer and live evaluation suite built with Python, Pygame, and Stockfish. The application fetches match histories directly from the Chess.com REST API, performs multi-thread background Stockfish evaluations, and delivers move-by-move tactical coaching feedback.
+A Chess.com game reviewer with Stockfish analysis, move-by-move coaching, and an optional AI coach.
+It runs locally in your browser.
 
 ## Features
-- **Chess.com Ingestion:** Directly imports match history via the Chess.com public API.
-- **Stockfish Engine Integration:** Non-blocking multi-threaded analysis calculating centipawn evaluations up to depth 16+.
-- **Dynamic Coaching Notes:** Categorizes moves (Excellent, Good, Inaccuracy, Mistake, Blunder) and generates natural-language explanations with top 3-move continuation lines.
-- **Interactive Board UI:** Sleek, dark-mode Pygame UI with move highlights, piece drag-and-drop, and a live evaluation bar.
 
-## Tech Stack
-- **Language:** Python 3.12+
-- **GUI & Board Logic:** `pygame-ce`, `python-chess`
-- **Engine:** Stockfish UCI Engine
-- **APIs:** Chess.com Public API, Google Gemini API
+- **Your Chess.com history:** profile, ratings, win/loss stats, and your last 100 games, with filters by time control, result, opponent or opening.
+- **Live Stockfish review:** the board is usable right away, and each move's verdict appears as the engine reaches it.
+- **Move classifications:** Brilliant, Great, Best, Excellent, Good, Forced, Inaccuracy, Mistake and Blunder. Moves are judged by **win-probability loss**, the same idea Lichess and Chess.com use, not raw centipawns.
+- **A coach that can't make things up.** Every explanation is built from a *fact sheet* that the
+  code computes before any language model is involved (see [How the coach works](#how-the-coach-works)).
+- **Game story:** the two or three moments that decided the game, each with the reason in one line.
+- **"Show me" lines:** play the engine's punishment of a mistake, or the better line, right on the board.
+  The opponent's ignored threat is drawn as a red arrow.
+- **Game report:** accuracy for both players, classification counts, your accuracy by phase (opening, middlegame, endgame), and key moments you can jump to.
+- **Interactive board:** animated moves, eval bar, clickable eval graph, best-move arrows, clocks and time spent per move, captured material, 5 board themes, and light/dark mode.
+- **AI coach (optional):** "Rewrite with AI" has Gemini put the facts into words for your rating level.
+  Every answer is fact-checked and cached; without an API key the engine coach still works.
+- **Import any PGN** (Lichess, OTB games, anything).
+- Every analysis is **cached in SQLite**, so a game is only analyzed once.
 
-## Setup & Installation
+## Quick start
 
-1. **Install Stockfish (macOS Homebrew):**
-   ```bash
-   brew install stockfish
+```bash
+brew install stockfish        # the chess engine (macOS)
+./run.sh                      # sets up .venv, installs deps, starts the app
+```
+
+Then open **http://127.0.0.1:5050** (it opens automatically).
+
+Manual alternative:
+
+```bash
+python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
+.venv/bin/python server.py
+```
+
+## How the coach works
+
+Language models can't calculate chess. Hand one a FEN and ask "why was this a blunder?" and it will
+often describe a tactic that isn't on the board. So the coach is split into three stages:
+
+```
+ Stockfish + tactic detectors  ──►  fact sheet  ──►  LLM writes JSON  ──►  validator  ──►  you
+                                                          ▲                    │
+                                                          └── retry with ──────┘
+                                                              the problems
+```
+
+1. **Fact sheet** (`facts.py`): for one move, what it did, what the opponent was threatening
+   (a *null-move* search: "what if you had passed?"), the engine's refutation with the material
+   at the end, the better move and its line, and the single most important point.
+2. **Tactic detectors** (`tactics.py`): forks, pins, skewers, discovered attacks, double checks,
+   trapped pieces, mate threats, back-rank and smothered mates, and hanging pieces. Material is judged
+   with static exchange evaluation (SEE), so a defended piece isn't called "hanging".
+3. **Validator** (`ai_coach.py`): the model must answer in a fixed JSON shape, and code rejects the
+   answer if it mentions a move, a square, a "knight on f3" or a tactic that isn't in the fact sheet.
+   Rejected answers are retried with the list of problems. If the model keeps failing, or is offline,
+   the coach writes the explanation itself from the facts.
+
+The explanation is pitched to your rating: under 900 it sticks to checks, captures, threats and
+undefended pieces.
+
+### Keyboard shortcuts (review screen)
+
+| Key | Action |
+| --- | --- |
+| `←` `→` | previous / next move (the mouse wheel over the board works too) |
+| `↑` `↓` | first / last move |
+| `Space` | auto-play |
+| `F` | flip board |
+| `E` | toggle engine arrows |
+| `M` | mute / unmute move sounds |
+| `Esc` | back to games |
+
+## Configuration
+
+Copy `.env.example` to `.env`. Every setting is optional:
+
+| Variable | Default | Purpose |
+| --- | --- | --- |
+| `CHESS_COM_USERNAME` | `Atrowk` | default username |
+| `GEMINI_API_KEY` | — | enables the AI coach |
+| `GEMINI_MODEL` | `gemini-3.6-flash` | Gemini model name |
+| `GEMINI_FALLBACK_MODELS` | `gemini-3.1-flash-lite,gemini-3.8-flash` | tried in order when the main model is busy or out of quota |
+| `ANALYSIS_DEPTH` | `14` | Stockfish depth (higher is stronger and slower) |
+| `STOCKFISH_PATH` | auto-detected | path to the engine |
+| `PORT` | `5050` | web server port |
+
+## Desktop app
+
+The original Pygame interface still works and uses the same analysis core:
+
+```bash
+.venv/bin/python main.py
+```
+
+## Project layout
+
+```
+chess_coach/      shared core
+  analysis.py     Stockfish pass, classification, accuracy, quick move comments
+  tactics.py      tactic detectors and static exchange evaluation
+  facts.py        per-move fact sheets (threats, refutations, better lines)
+  story.py        the game's turning points
+  chesscom.py     Chess.com API client and PGN import
+  storage.py      SQLite cache (games, analyses, AI notes)
+  ai_coach.py     fact-checked LLM explanations + rule-based fallback
+  config.py       .env / environment settings
+server.py         Flask web app and JSON API
+web/              front-end (vanilla HTML/CSS/JS, no build step)
+main.py           Pygame desktop app
+tests/            unit tests:  python -m unittest discover tests
+```
