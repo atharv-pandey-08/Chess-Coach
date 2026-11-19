@@ -38,6 +38,18 @@ CREATE TABLE IF NOT EXISTS coach_notes (
     created_at  INTEGER NOT NULL,
     PRIMARY KEY (game_id, ply, source)
 );
+CREATE TABLE IF NOT EXISTS puzzles (
+    id          TEXT PRIMARY KEY,   -- "<game_id>:<ply>"
+    username    TEXT NOT NULL,
+    data_json   TEXT NOT NULL,      -- fen, solution, theme, source move...
+    due         INTEGER NOT NULL,   -- unix time it should be shown next
+    interval_d  REAL NOT NULL DEFAULT 0,
+    ease        REAL NOT NULL DEFAULT 2.5,
+    reps        INTEGER NOT NULL DEFAULT 0,
+    lapses      INTEGER NOT NULL DEFAULT 0,
+    last_seen   INTEGER
+);
+CREATE INDEX IF NOT EXISTS puzzles_due ON puzzles (username, due);
 CREATE TABLE IF NOT EXISTS ai_notes (
     game_id     TEXT NOT NULL,
     ply         INTEGER NOT NULL,
@@ -135,3 +147,72 @@ def save_coach_note(game_id: str, ply: int, source: str, data: dict[str, Any]) -
     with connect() as c:
         c.execute("INSERT OR REPLACE INTO coach_notes VALUES (?, ?, ?, ?, ?)",
                   (game_id, ply, source, json.dumps(data), int(time.time())))
+
+
+# ---------------------------------------------------------------------------
+# Cross-game data (insights, puzzles)
+# ---------------------------------------------------------------------------
+
+def games_for(username: str) -> list[dict[str, Any]]:
+    """Every stored game for a user, newest first."""
+    with connect() as c:
+        rows = c.execute("SELECT data_json FROM games WHERE username = ? ORDER BY end_time DESC",
+                         (username.lower(),)).fetchall()
+    return [json.loads(r["data_json"]) for r in rows]
+
+
+def analysed_ids(game_ids: list[str], min_depth: int) -> set[str]:
+    if not game_ids:
+        return set()
+    marks = ",".join("?" * len(game_ids))
+    with connect() as c:
+        rows = c.execute(f"SELECT DISTINCT game_id FROM analyses WHERE depth >= ? AND game_id IN ({marks})",
+                         [min_depth, *game_ids]).fetchall()
+    return {r["game_id"] for r in rows}
+
+
+def save_puzzles(username: str, puzzles: list[dict[str, Any]]) -> int:
+    """Insert new puzzles (existing ones keep their review schedule). Returns how many were new."""
+    now = int(time.time())
+    with connect() as c:
+        before = c.total_changes
+        c.executemany(
+            "INSERT OR IGNORE INTO puzzles (id, username, data_json, due) VALUES (?, ?, ?, ?)",
+            [(p["id"], username.lower(), json.dumps(p), now) for p in puzzles])
+        return c.total_changes - before
+
+
+def next_puzzle(username: str, exclude: str | None = None) -> dict[str, Any] | None:
+    """The most overdue puzzle, or None if nothing is due."""
+    with connect() as c:
+        row = c.execute(
+            "SELECT * FROM puzzles WHERE username = ? AND due <= ? AND id != ? ORDER BY due, reps LIMIT 1",
+            (username.lower(), int(time.time()), exclude or "")).fetchone()
+    return _puzzle_row(row) if row else None
+
+
+def get_puzzle(puzzle_id: str) -> dict[str, Any] | None:
+    with connect() as c:
+        row = c.execute("SELECT * FROM puzzles WHERE id = ?", (puzzle_id,)).fetchone()
+    return _puzzle_row(row) if row else None
+
+
+def puzzle_stats(username: str) -> dict[str, int]:
+    now = int(time.time())
+    with connect() as c:
+        row = c.execute(
+            "SELECT COUNT(*) AS total, SUM(due <= ?) AS due, SUM(reps > 0) AS seen, "
+            "SUM(interval_d >= 7) AS learned FROM puzzles WHERE username = ?",
+            (now, username.lower())).fetchone()
+    return {k: int(row[k] or 0) for k in ("total", "due", "seen", "learned")}
+
+
+def schedule_puzzle(puzzle_id: str, *, due: int, interval_d: float, ease: float, reps: int, lapses: int) -> None:
+    with connect() as c:
+        c.execute("UPDATE puzzles SET due = ?, interval_d = ?, ease = ?, reps = ?, lapses = ?, last_seen = ? "
+                  "WHERE id = ?", (due, interval_d, ease, reps, lapses, int(time.time()), puzzle_id))
+
+
+def _puzzle_row(row: sqlite3.Row) -> dict[str, Any]:
+    return {**json.loads(row["data_json"]), "username": row["username"], "due": row["due"], "interval_d": row["interval_d"],
+            "ease": row["ease"], "reps": row["reps"], "lapses": row["lapses"]}

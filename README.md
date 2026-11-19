@@ -5,6 +5,14 @@ It runs locally in your browser.
 
 ## Features
 
+- **Insights across all your games:** what *kind* of mistake costs you most (hanging pieces,
+  missed threats, walking into forks...), with real examples you can click into; accuracy and
+  blunder rate by clock left and by thinking time; by phase and colour; results and "first
+  mistake" by opening; and accuracy over time.
+- **Puzzles from your own mistakes:** every position where you went wrong becomes a puzzle,
+  brought back on a spaced-repetition schedule (like Anki) until you get it right reliably.
+- **Background analysis:** analyze your backlog in the background; opening a game review always
+  jumps the queue.
 - **Your Chess.com history:** profile, ratings, win/loss stats, and your last 100 games, with filters by time control, result, opponent or opening.
 - **Live Stockfish review:** the board is usable right away, and each move's verdict appears as the engine reaches it.
 - **Move classifications:** Brilliant, Great, Best, Excellent, Good, Forced, Inaccuracy, Mistake and Blunder. Moves are judged by **win-probability loss**, the same idea Lichess and Chess.com use, not raw centipawns.
@@ -74,6 +82,30 @@ undefended pieces.
 | `M` | mute / unmute move sounds |
 | `Esc` | back to games |
 
+## How the insights work
+
+Every mistake in every analysed game gets the same fact sheet the move coach uses, and a rule
+puts it in one bucket, checked in this order:
+
+| Category | Rule (from the facts) |
+| --- | --- |
+| Allowed checkmate | the engine's refutation ends in mate |
+| Walked into a tactic | the opponent's reply line contains a fork, pin, skewer, discovered attack... |
+| Left a piece undefended | the move leaves something en prise (by static exchange evaluation) |
+| Ignored the opponent's threat | the null-move threat was still there after the move |
+| Missed a tactic | the better move contained a tactic for you |
+| Exposed your king | the punishment starts with checks |
+| Gave away material in a sequence | material drops by the end of the engine line |
+| Let a winning position slip | you were above 70% to win |
+| Drifted into a worse position | none of the above: no tactic, just a worse position |
+
+Because the statistics and the explanations come from the same facts, the numbers on the
+Insights page always agree with what the coach says about each move. Headlines are only shown
+when the data supports them (minimum sample sizes and a real gap).
+
+Puzzles use a simplified **SM-2** schedule (`srs.py`): solved puzzles come back after 1 day,
+3 days, then a growing interval; a miss brings the puzzle back in 10 minutes.
+
 ## Configuration
 
 Copy `.env.example` to `.env`. Every setting is optional:
@@ -104,12 +136,14 @@ chess_coach/      shared core
   tactics.py      tactic detectors and static exchange evaluation
   facts.py        per-move fact sheets (threats, refutations, better lines)
   story.py        the game's turning points
+  insights.py     mistake categories and cross-game statistics
+  srs.py          spaced-repetition schedule for puzzles
   chesscom.py     Chess.com API client and PGN import
   storage.py      SQLite cache (games, analyses, AI notes)
   ai_coach.py     fact-checked LLM explanations + rule-based fallback
   config.py       .env / environment settings
 server.py         Flask web app and JSON API
-web/              front-end (vanilla HTML/CSS/JS, no build step)
+web/              front-end (vanilla HTML/CSS/JS, no build step; pages.js = Insights + Puzzles)
 main.py           Pygame desktop app
 tests/            unit tests:  python -m unittest discover tests
 ```

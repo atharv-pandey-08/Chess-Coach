@@ -249,9 +249,10 @@ async function pollReview(first = false) {
     S.flipped = data.game.user_color === "black";
     renderGameHead();
     buildSquares();
+    if (S.pendingPly != null) { S.ply = S.prevPly = S.pendingPly; S.pendingPly = null; }
   }
   renderProgress();
-  renderAll(false);
+  renderAll(first);
   if (data.status === "running" || data.status === "queued") {
     S.pollTimer = setTimeout(() => pollReview(), 650);
   } else if (data.status === "done" && !first && !wasDone) {
@@ -779,22 +780,33 @@ function control(act) {
 // Router
 // ---------------------------------------------------------------------------
 function route() {
-  const m = location.hash.match(/^#\/review\/(.+)$/);
+  const views = { home: "#home-view", review: "#review-view", insights: "#insights-view", puzzles: "#puzzles-view" };
+  const show = (name) => {
+    Object.entries(views).forEach(([k, sel]) => ($(sel).hidden = k !== name));
+    $$("#nav a").forEach((a) => a.classList.toggle("on", a.dataset.nav === (name === "review" || name === "home" ? "games" : name)));
+  };
+  const m = location.hash.match(/^#\/review\/([^/]+)(?:\/(\d+))?$/);
   if (m) {
-    $("#home-view").hidden = true;
-    $("#review-view").hidden = false;
+    show("review");
     const id = decodeURIComponent(m[1]);
+    S.pendingPly = m[2] ? +m[2] : null;
     if (id !== S.gameId || !S.data) openReview(id);
+    else if (S.pendingPly != null) { goTo(S.pendingPly); S.pendingPly = null; }
     window.scrollTo(0, 0);
-  } else {
-    stopPlay();
-    clearTimeout(S.pollTimer);
-    S.gameId = null;
-    $("#review-view").hidden = true;
-    $("#home-view").hidden = false;
+    return;
+  }
+  stopPlay();
+  clearTimeout(S.pollTimer);
+  S.gameId = null;
+  S.data = null;
+  if (location.hash.startsWith("#/insights")) { show("insights"); showInsights(); }
+  else if (location.hash.startsWith("#/puzzles")) { show("puzzles"); showPuzzles(); }
+  else {
+    show("home");
     if (!S.games.length && S.username) loadHome(S.username);
     else renderGames(), renderProfile();
   }
+  window.scrollTo(0, 0);
 }
 
 // ---------------------------------------------------------------------------
@@ -908,6 +920,8 @@ function bind() {
 
 
 async function init() {
+  // Warm the piece images so a board never flashes empty while Stockfish keeps the CPU busy.
+  for (const c of "wb") for (const t of "kqrbnp") new Image().src = `/pieces/${c}${t}.png`;
   applyTheme(store.get("theme", window.matchMedia("(prefers-color-scheme: light)").matches ? "light" : "dark"));
   applySound();
   bind();
@@ -926,7 +940,7 @@ async function init() {
   const params = new URLSearchParams(location.search);
   S.username = params.get("u") || store.get("username", "") || S.cfg.username || "";
   $("#user-input").value = S.username;
-  if (location.hash.startsWith("#/review/")) {
+  if (/^#\/(review|insights|puzzles)/.test(location.hash)) {
     route();
   } else if (S.username) {
     loadHome(S.username);

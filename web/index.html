@@ -13,6 +13,11 @@
 <body>
   <header class="topbar">
     <a class="brand" href="#/" aria-label="Home"><img src="/pieces/wn.png" alt="" />Chess Coach</a>
+    <nav class="nav" id="nav">
+      <a href="#/" data-nav="games">Games</a>
+      <a href="#/insights" data-nav="insights">Insights</a>
+      <a href="#/puzzles" data-nav="puzzles">Puzzles<span class="nav-count" id="puzzle-count" hidden></span></a>
+    </nav>
 
     <form id="user-form" class="user-form" autocomplete="off">
       <input id="user-input" name="username" placeholder="Chess.com username" spellcheck="false" aria-label="Chess.com username" />
@@ -67,6 +72,30 @@
       </div>
       <p id="games-sub" class="muted small">Loading…</p>
       <div id="games-list" class="games"></div>
+    </section>
+
+    <!-- INSIGHTS -->
+    <section id="insights-view" class="view page" hidden>
+      <div class="page-head">
+        <div>
+          <h1>Insights</h1>
+          <p class="muted small" id="insights-sub">Patterns across your analysed games.</p>
+        </div>
+        <div class="batch" id="batch"></div>
+      </div>
+      <div id="insights"></div>
+    </section>
+
+    <!-- PUZZLES -->
+    <section id="puzzles-view" class="view puzzle-page" hidden>
+      <div class="pz-board-col">
+        <div class="board pz-board" id="pz-board">
+          <div class="squares"></div>
+          <div class="pieces"></div>
+          <svg class="arrows" viewBox="0 0 8 8" preserveAspectRatio="none"></svg>
+        </div>
+      </div>
+      <aside class="pz-side" id="pz-side"></aside>
     </section>
 
     <!-- REVIEW -->
@@ -129,5 +158,6 @@
 
   <div id="toast" class="toast" hidden></div>
   <script src="/app.js"></script>
+  <script src="/pages.js"></script>
 </body>
 </html>

@@ -13,7 +13,11 @@ from concurrent.futures import ThreadPoolExecutor
 
 from flask import Flask, jsonify, request, send_from_directory
 
-from chess_coach import ai_coach, analysis, chesscom, config, facts, storage, story
+import time
+
+import chess
+
+from chess_coach import ai_coach, analysis, chesscom, config, facts, insights, srs, storage, story
 
 app = Flask(__name__, static_folder="web", static_url_path="")
 app.json.sort_keys = False
@@ -237,6 +241,202 @@ def api_story(game_id: str):
             return jsonify({**payload, "cached": False})
     storage.save_coach_note(game["id"], 0, "ai" if payload["ai"] else "engine", payload)
     return jsonify({**payload, "cached": False})
+
+
+# ---------------------------------------------------------------------------
+# Batch analysis: works through a user's backlog in the background, and steps
+# aside whenever someone opens a game review (that job runs first).
+# ---------------------------------------------------------------------------
+
+class Batch:
+    def __init__(self) -> None:
+        self.lock = threading.Lock()
+        self.queue: list[dict] = []
+        self.username = ""
+        self.done = 0
+        self.total = 0
+        self.current: str | None = None
+        self.thread: threading.Thread | None = None
+        self.error: str | None = None
+
+    def status(self) -> dict:
+        with self.lock:
+            return {"running": bool(self.queue or self.current), "done": self.done, "total": self.total,
+                    "current": self.current, "username": self.username, "error": self.error}
+
+    def add(self, username: str, games: list[dict]) -> None:
+        with self.lock:
+            if self.username != username.lower() or not (self.queue or self.current):
+                self.username, self.done, self.total, self.error = username.lower(), 0, 0, None
+                self.queue = []
+            queued = {g["id"] for g in self.queue} | {self.current}
+            new = [g for g in games if g["id"] not in queued]
+            self.queue.extend(new)
+            self.total += len(new)
+            if self.thread is None or not self.thread.is_alive():
+                self.thread = threading.Thread(target=self._loop, name="batch-analysis", daemon=True)
+                self.thread.start()
+
+    def _interactive_busy(self) -> bool:
+        with _jobs_lock:
+            return any(not j.done for gid, j in _jobs.items() if gid != self.current)
+
+    def _loop(self) -> None:
+        while True:
+            with self.lock:
+                if not self.queue:
+                    self.current = None
+                    return
+                game = self.queue.pop(0)
+                self.current = game["id"]
+            try:
+                while self._interactive_busy():
+                    time.sleep(0.5)
+                if storage.get_analysis(game["id"], config.ANALYSIS_DEPTH) is None:
+                    job = analysis.EngineJob(analysis.parse_pgn(game["pgn"]))
+                    with _jobs_lock:
+                        _jobs[game["id"]] = job  # a review opened now polls this job instead of starting another
+                    _run_job(game, job)
+                    if job.error:
+                        self.error = job.error
+                        if "isn't installed" in job.error:
+                            with self.lock:
+                                self.queue.clear()
+            except Exception as exc:  # one bad PGN shouldn't stop the batch
+                self.error = str(exc)
+            with self.lock:
+                self.done += 1
+
+
+_batch = Batch()
+
+
+@app.post("/api/batch")
+def api_batch():
+    """Queue the user's most recent un-analysed games (default 20)."""
+    body = request.get_json(silent=True) or {}
+    username = (body.get("username") or config.DEFAULT_USERNAME).strip()
+    count = max(1, min(100, int(body.get("count") or 20)))
+    if not config.find_stockfish():
+        return _error("Stockfish isn't installed.", 503)
+    games = storage.games_for(username)
+    done = storage.analysed_ids([g["id"] for g in games], config.ANALYSIS_DEPTH)
+    todo = [g for g in games if g["id"] not in done][:count]
+    _batch.add(username, todo)
+    return jsonify(_batch.status())
+
+
+@app.get("/api/batch")
+def api_batch_status():
+    return jsonify(_batch.status())
+
+
+# ---------------------------------------------------------------------------
+# Insights and puzzles
+# ---------------------------------------------------------------------------
+
+def _extract_all(username: str) -> tuple[list[dict], list[dict]]:
+    games = storage.games_for(username)
+    done = storage.analysed_ids([g["id"] for g in games], config.ANALYSIS_DEPTH)
+    extracted = []
+    for g in games:
+        if g["id"] in done:
+            try:
+                extracted.append(insights.extract_game(g, storage.get_analysis(g["id"], config.ANALYSIS_DEPTH)))
+            except Exception:
+                continue  # a malformed game shouldn't hide everyone else's stats
+    return games, extracted
+
+
+@app.get("/api/insights")
+def api_insights():
+    username = (request.args.get("username") or config.DEFAULT_USERNAME).strip()
+    games, extracted = _extract_all(username)
+    if not games:
+        return _error("Load your games first.", 404)
+    storage.save_puzzles(username, [p for g in extracted for p in g["puzzles"]])
+    profile = insights.build_profile(games, extracted)
+    return jsonify({**profile, "batch": _batch.status(), "puzzles": storage.puzzle_stats(username)})
+
+
+def _line_fens(fen: str, ucis: list[str]) -> list[str]:
+    board, out = chess.Board(fen), []
+    for u in ucis:
+        mv = chess.Move.from_uci(u)
+        if mv not in board.legal_moves:
+            break
+        board.push(mv)
+        out.append(board.fen())
+    return out
+
+
+def _public_puzzle(p: dict) -> dict:
+    """What the board needs before the answer (no solution!)."""
+    return {k: p[k] for k in ("id", "game_id", "ply", "fen", "color", "theme", "category", "opponent",
+                              "end_time", "played_san", "reps", "lapses")}
+
+
+@app.get("/api/puzzles/next")
+def api_puzzle_next():
+    username = (request.args.get("username") or config.DEFAULT_USERNAME).strip()
+    # Make sure puzzles from newly analysed games exist.
+    _, extracted = _extract_all(username)
+    storage.save_puzzles(username, [p for g in extracted for p in g["puzzles"]])
+    p = storage.next_puzzle(username, exclude=request.args.get("after"))
+    stats = storage.puzzle_stats(username)
+    return jsonify({"puzzle": _public_puzzle(p) if p else None, "stats": stats})
+
+
+@app.post("/api/puzzles/<path:puzzle_id>/answer")
+def api_puzzle_answer(puzzle_id: str):
+    p = storage.get_puzzle(puzzle_id)
+    if p is None:
+        return _error("Unknown puzzle.", 404)
+    body = request.get_json(silent=True) or {}
+    board = chess.Board(p["fen"])
+    move = None
+    if not body.get("give_up"):  # "Show the answer" counts as a miss
+        uci = str(body.get("uci", ""))
+        try:
+            move = chess.Move.from_uci(uci)
+        except ValueError:
+            return _error("That isn't a move.")
+        if move not in board.legal_moves and len(uci) == 4:
+            move = chess.Move.from_uci(uci + "q")  # auto-queen
+        if move not in board.legal_moves:
+            return _error("That move isn't legal here.", 422)
+
+    correct = move is not None and move.uci() == p["solution"][0]
+    also_good = False
+    if move is not None and not correct:
+        # Accept any move that's practically as good as the engine's (within 4% win chance).
+        after = board.copy()
+        after.push(move)
+        if after.is_checkmate():
+            also_good = True
+        else:
+            res = _coach_engine.analyse(after)
+            if res:
+                pov = res[0]["wp"] if board.turn == chess.WHITE else 100 - res[0]["wp"]
+                also_good = p["best_win"] - pov <= 4
+    solved = correct or also_good
+
+    card, due = srs.review(srs.Card(p["interval_d"], p["ease"], p["reps"], p["lapses"]), solved, int(time.time()))
+    storage.schedule_puzzle(puzzle_id, due=due, interval_d=card.interval_d, ease=card.ease,
+                            reps=card.reps, lapses=card.lapses)
+    interval = card.interval_d
+
+    played = board.copy()
+    if move is not None:
+        played.push(move)
+    return jsonify({
+        "correct": solved, "exact": correct, "your_move": board.san(move) if move else None,
+        "your_fen": played.fen(),
+        "solution_san": p["solution_san"], "line_san": p["line_san"], "line_uci": p["line_uci"],
+        "line_fens": _line_fens(p["fen"], p["line_uci"]), "key_point": p["key_point"],
+        "explanation": p["explanation"], "played_san": p["played_san"],
+        "next_in_days": interval, "stats": storage.puzzle_stats(p["username"]),
+    })
 
 
 @app.get("/pieces/<path:name>")
