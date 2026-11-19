@@ -4,8 +4,6 @@
 import os
 import sys
 import io
-import math
-import shutil
 import time
 import threading
 
@@ -38,17 +36,14 @@ except ImportError:
 SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
 ASSET_DIR = os.path.join(SCRIPT_DIR, "assets")
 
-# Absolute path for Apple Silicon M-series default Homebrew installation
-STOCKFISH_PATH = "/opt/homebrew/bin/stockfish"
+from chess_coach import config as core_config
+from chess_coach.analysis import EngineJob, build_review, format_eval, parse_pgn
 
-CHESS_COM_USERNAME = "Atrowk"
-ARCHIVES_TO_SCAN = 3
+CHESS_COM_USERNAME = core_config.DEFAULT_USERNAME
+ARCHIVES_TO_SCAN = core_config.ARCHIVES_TO_SCAN
 MAX_GAMES_IN_LIST = 30
-ANALYSIS_DEPTH = 15  # Bumped depth for higher quality 3-move continuations
 
-CHESS_COM_HEADERS = {
-    "User-Agent": "PersonalChessCoachApp/2.0 (Chess.com game reviewer)"
-}
+CHESS_COM_HEADERS = core_config.HTTP_HEADERS
 
 # --- Premium Aesthetic Palette (Catppuccin Mocha / MacOS Dark Mode Inspired) ---
 BG = (30, 30, 46)             # Deep base
@@ -81,15 +76,11 @@ EVAL_BAR_WHITE = (235, 237, 243)
 EVAL_BAR_BLACK = (49, 50, 68)
 EVAL_BAR_NEUTRAL = (69, 71, 90)
 
-CLASSIFICATION_THRESHOLDS = [
-    (15, "Excellent"),
-    (40, "Good"),
-    (90, "Inaccuracy"),
-    (200, "Mistake"),
-    (float("inf"), "Blunder"),
-]
-
 CLASSIFICATION_COLORS = {
+    "Brilliant": (38, 194, 181),
+    "Great": (91, 143, 240),
+    "Best": (95, 207, 128),
+    "Forced": (140, 149, 168),
     "Excellent": (166, 227, 161), # Green
     "Good": (137, 180, 250),      # Blue
     "Inaccuracy": (249, 226, 175),# Yellow
@@ -236,158 +227,68 @@ def _result_label(result_code):
     return "Loss"
 
 # ------------------------------------------------------------------------------
-# ADVANCED ENGINE ANALYSIS
+# ENGINE ANALYSIS (shared core in chess_coach/analysis.py)
 # ------------------------------------------------------------------------------
 
-def score_to_white_cp(info):
-    score = info.get("score")
-    if score is None: return None, None
-    ws = score.white()
-    return (None, ws.mate()) if ws.is_mate() else (ws.score(), None)
-
-def pov_score(cp_white, mate_white, color):
-    if mate_white is not None:
-        return None, (mate_white if color == chess.WHITE else -mate_white)
-    if cp_white is None: return None, None
-    return (cp_white if color == chess.WHITE else -cp_white), None
-
-def effective_cp(cp, mate):
-    if mate is not None:
-        return (100000 - abs(mate)) if mate > 0 else -(100000 - abs(mate))
-    return cp if cp is not None else 0
-
-def describe_advantage(cp, mate, mover_label):
-    if mate is not None:
-        if mate > 0: return f"completely winning (Mate in {mate})"
-        else: return f"facing forced mate (in {abs(mate)})"
-    if cp is None: return "in an unclear position"
-    
-    if cp >= 300: return "completely crushing"
-    if cp >= 150: return "clearly better"
-    if cp >= 50: return "slightly better"
-    if cp > -50: return "roughly equal"
-    if cp > -150: return "slightly worse"
-    if cp > -300: return "clearly worse"
-    return "completely lost"
-
 class GameAnalysis:
-    def __init__(self, pgn_text):
-        game = chess.pgn.read_game(io.StringIO(pgn_text))
-        if game is None:
-            raise ValueError("The selected game contains an invalid or empty PGN.")
+    """Adapter exposing the shared analysis core with the interface this UI uses."""
 
-        board = game.board()
-        self.boards = [board.copy()]
-        self.sans = [None]
-
-        for move in game.mainline_moves():
-            self.sans.append(board.san(move))
-            board.push(move)
-            self.boards.append(board.copy())
-
+    def __init__(self, pgn_text, user_color=chess.WHITE):
+        try:
+            self.parsed = parse_pgn(pgn_text)
+        except ValueError as exc:
+            raise ValueError("The selected game contains an invalid or empty PGN.") from exc
+        self.pgn = pgn_text
+        self.user_color = "white" if user_color == chess.WHITE else "black"
+        self.job = EngineJob(self.parsed)
+        self.boards = self.parsed.boards
+        self.sans = [None] + self.parsed.sans
         self.total_positions = len(self.boards)
-        self.evals = [None] * self.total_positions
-        self.progress = 0
-        self.done = False
-        self.error = None
+        self._review = None
+        self._error = None
+
+    # progress / status mirror the background engine job
+    progress = property(lambda self: self.job.progress)
+    done = property(lambda self: self.job.done)
+    evals = property(lambda self: self.job.evals)
+
+    @property
+    def error(self):
+        return self._error or self.job.error
+
+    @error.setter
+    def error(self, value):
+        self._error = value
+
+    @done.setter
+    def done(self, value):
+        self.job.done = value
 
     def analyze(self, engine_path):
-        engine = None
-        try:
-            engine = chess.engine.SimpleEngine.popen_uci(engine_path)
-            limit = chess.engine.Limit(depth=ANALYSIS_DEPTH)
-
-            for i, board in enumerate(self.boards):
-                if board.is_game_over():
-                    self.evals[i] = {"cp": None, "mate": None, "best_line": []}
-                    self.progress = i + 1
-                    continue
-
-                info = engine.analyse(board, limit)
-                cp, mate = score_to_white_cp(info)
-
-                pv = info.get("pv") or []
-                best_line = []
-                temp_board = board.copy()
-                for move in pv[:3]:
-                    try:
-                        best_line.append(temp_board.san(move))
-                        temp_board.push(move)
-                    except (ValueError, TypeError, AttributeError):
-                        break
-
-                self.evals[i] = {"cp": cp, "mate": mate, "best_line": best_line}
-                self.progress = i + 1
-
-        except Exception as exc:
-            self.error = f"Stockfish analysis failed: {exc}"
-        finally:
-            if engine is not None:
-                try:
-                    engine.quit()
-                except Exception:
-                    pass
-            self.done = True
+        self.job.run(engine_path)
 
     def advice_for(self, ply_index):
-        if ply_index == 0 or self.evals[ply_index] is None or self.evals[ply_index - 1] is None:
+        if ply_index == 0 or not self.done or self.error:
             return None, "Game start. Use the arrows to step through the moves.", ""
-
-        board_before = self.boards[ply_index - 1]
-        mover = board_before.turn
-        mover_label = "White" if mover == chess.WHITE else "Black"
-
-        prev = self.evals[ply_index - 1]
-        cur = self.evals[ply_index]
-        cp_before, mate_before = pov_score(prev["cp"], prev["mate"], mover)
-        cp_after, mate_after = pov_score(cur["cp"], cur["mate"], mover)
-        
-        loss = effective_cp(cp_before, mate_before) - effective_cp(cp_after, mate_after)
-        loss = max(0, loss)
-
-        classification = "Blunder"
-        for threshold, label in CLASSIFICATION_THRESHOLDS:
-            if loss <= threshold:
-                classification = label
-                break
-
-        # Contextual narrative generation
-        context_state = describe_advantage(cp_before, mate_before, mover_label)
-        
-        if classification == "Excellent":
-            text = f"You were {context_state}, and this move perfectly maintains the pressure. Matches the engine's top choice."
-        else:
-            if loss > 300 and cp_before and cp_before > 200:
-                text = f"You were completely winning, but this move severely throws away your advantage. Lost {loss/100:.1f} pawns."
-            elif classification in ["Mistake", "Blunder"]:
-                text = f"You were {context_state}. This heavily shifts the momentum to your opponent. Cost you {loss/100:.1f} pawns."
-            else:
-                text = f"You were {context_state}. This is a minor inaccuracy, losing about {loss/100:.1f} pawns."
-
-        best_line = prev.get("best_line", [])
-        line_str = " ".join(best_line) if best_line else "N/A"
-        
-        return classification, text, line_str
+        if self._review is None:
+            self._review = build_review(self.pgn, self.job.evals, user_color=self.user_color,
+                                        parsed=self.parsed)
+        move = self._review["moves"][ply_index - 1]
+        if not move["classification"]:
+            return None, "No evaluation available for this move.", ""
+        line = move.get("best_line") if move.get("best_san") else self._review["positions"][ply_index]["eval"]["line"]
+        return move["classification"], move["comment"], " ".join((line or [])[:3])
 
 # ------------------------------------------------------------------------------
 # UI RENDERING & LAYOUT
 # ------------------------------------------------------------------------------
 
-def eval_to_white_fraction(cp, mate):
-    if mate is not None:
-        return 1.0 if mate > 0 else 0.0
-    if cp is None:
-        return 0.5
+def eval_to_white_fraction(ev):
+    """White's share of the eval bar, from the shared core's win probability."""
+    return 0.5 if not ev else max(0.0, min(1.0, ev["wp"] / 100.0))
 
-    # Clamp the input so an extreme engine score cannot overflow exp().
-    x = max(-20.0, min(20.0, 0.004 * float(cp)))
-    win_chances = 2.0 / (1.0 + math.exp(-x)) - 1.0
-    return max(0.0, min(1.0, (win_chances + 1.0) / 2.0))
-
-def format_score(cp, mate):
-    if mate is not None: return f"M{abs(mate)}" if mate > 0 else f"-M{abs(mate)}"
-    if cp is None: return "—"
-    return f"{'+' if cp > 0 else ''}{cp / 100.0:.2f}"
+def format_score(ev):
+    return format_eval(ev) or "—"
 
 class Button:
     def __init__(self, rect, text, font):
@@ -457,24 +358,13 @@ def wrap_text(text, font, max_width):
 # ------------------------------------------------------------------------------
 # MAIN APP
 # ------------------------------------------------------------------------------
-def find_stockfish():
-    """Return the first usable Stockfish executable path."""
-    candidates = [
-        STOCKFISH_PATH,
-        "/usr/local/bin/stockfish",
-        shutil.which("stockfish"),
-    ]
-    for path in candidates:
-        if path and os.path.isfile(path) and os.access(path, os.X_OK):
-            return path
-    return None
-
+find_stockfish = core_config.find_stockfish
 
 
 class ChessCoachApp:
     def __init__(self):
         pygame.init()
-        pygame.display.set_caption("Chess Game Reviewer")
+        pygame.display.set_caption("Chess Coach — Desktop")
         self.screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
         self.clock = pygame.time.Clock()
 
@@ -536,7 +426,7 @@ class ChessCoachApp:
 
     def open_game(self, game):
         try:
-            analysis = GameAnalysis(game["pgn"])
+            analysis = GameAnalysis(game["pgn"], game.get("user_color", chess.WHITE))
         except Exception as exc:
             self.status_message = f"Could not open game: {exc}"
             self.mode = "list"
@@ -552,8 +442,8 @@ class ChessCoachApp:
         engine_path = find_stockfish()
         if engine_path is None:
             self.analysis.error = (
-                "Stockfish executable not found. Install Stockfish and make sure it is "
-                "available at /opt/homebrew/bin/stockfish, /usr/local/bin/stockfish, or on PATH."
+                "Stockfish executable not found. Install it with `brew install stockfish` "
+                "or set STOCKFISH_PATH in your .env file."
             )
             self.analysis.done = True
             return
@@ -755,13 +645,13 @@ class ChessCoachApp:
         overlay.fill(color)
         self.screen.blit(overlay, (x, y))
 
-    def draw_eval_bar(self, cp, mate, available):
+    def draw_eval_bar(self, ev, available):
         x = BOARD_PIXELS
         rect = pygame.Rect(x, 0, EVAL_BAR_WIDTH, BOARD_PIXELS)
         if not available:
             pygame.draw.rect(self.screen, EVAL_BAR_NEUTRAL, rect)
             return
-        fraction = eval_to_white_fraction(cp, mate)
+        fraction = eval_to_white_fraction(ev)
         white_h = int(BOARD_PIXELS * fraction)
 
         if self.board_flipped:
@@ -828,13 +718,12 @@ class ChessCoachApp:
 
         # Core Metrics Panel
         eval_data = self.analysis.evals[self.ply_index]
-        cp, mate = (eval_data["cp"], eval_data["mate"]) if eval_data else (None, None)
         
         panel_rect = pygame.Rect(x, y, content_w, 75)
         pygame.draw.rect(self.screen, PANEL_BG, panel_rect, border_radius=12)
         pygame.draw.rect(self.screen, PANEL_BORDER, panel_rect, width=1, border_radius=12)
         self.screen.blit(self.font_label.render("POSITION EVALUATION", True, TEXT_MUTED), (x + 16, y + 14))
-        self.screen.blit(self.font_value.render(format_score(cp, mate) if eval_data else "N/A", True, TEXT_PRIMARY), (x + 16, y + 32))
+        self.screen.blit(self.font_value.render(format_score(eval_data) if eval_data else "N/A", True, TEXT_PRIMARY), (x + 16, y + 32))
         
         move_str = f"Move {self.ply_index} / {self.analysis.total_positions - 1}"
         move_surf = self.font_row.render(move_str, True, TEXT_MUTED)
@@ -876,13 +765,8 @@ class ChessCoachApp:
             self.draw_board(self.analysis.boards[self.ply_index])
 
             current_eval = self.analysis.evals[self.ply_index]
-            if self.mode == "review" and current_eval is not None and self.analysis.error is None:
-                cp, mate = current_eval["cp"], current_eval["mate"]
-                available = True
-            else:
-                cp, mate, available = None, None, False
-
-            self.draw_eval_bar(cp, mate, available)
+            available = self.mode == "review" and current_eval is not None and self.analysis.error is None
+            self.draw_eval_bar(current_eval if available else None, available)
             self.draw_review_sidebar()
 
         pygame.display.flip()

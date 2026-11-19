@@ -10,7 +10,6 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 README = (ROOT / "README.md").read_text(encoding="utf-8")
-MAIN = (ROOT / "main.py").read_text(encoding="utf-8")
 
 
 class ReadmeTests(unittest.TestCase):
@@ -28,12 +27,16 @@ class ReadmeTests(unittest.TestCase):
             self.assertIn("viewBox", root.attrib)
 
     def test_readme_numbers_match_the_code(self) -> None:
-        # The README states depth 15 and a 60 FPS cap; keep it honest if code changes.
-        self.assertIn("ANALYSIS_DEPTH = 15", MAIN)
-        self.assertIn("FPS = 60", MAIN)
-        for limit in ("(15, \"Excellent\")", "(40, \"Good\")", "(90, \"Inaccuracy\")", "(200, \"Mistake\")"):
-            self.assertIn(limit, MAIN)
-
+        # The README states these settings; keep it honest if the code changes.
+        config = (ROOT / "chess_coach" / "config.py").read_text(encoding="utf-8")
+        analysis = (ROOT / "chess_coach" / "analysis.py").read_text(encoding="utf-8")
+        self.assertIn('"ANALYSIS_DEPTH", 14', config.replace("'", '"'))
+        self.assertIn("| `ANALYSIS_DEPTH` | `14` |", README)
+        self.assertIn("depth 14", README)
+        self.assertIn("Limit(depth=self.depth, time=1.5)", analysis)
+        self.assertIn("1.5 s cap", README)
+        for limit in ('(2.0, "Excellent")', '(5.0, "Good")', '(10.0, "Inaccuracy")', '(20.0, "Mistake")'):
+            self.assertIn(limit, analysis)
 
 if __name__ == "__main__":
     unittest.main()

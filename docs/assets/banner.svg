@@ -96,8 +96,8 @@
   <g font-family="'Helvetica Neue', Helvetica, Arial, sans-serif">
     <text x="44" y="110" textLength="380" lengthAdjust="spacing" font-size="22" font-weight="600" fill="#d9b45a" letter-spacing="3">PERSONAL</text>
     <text x="42" y="168" textLength="400" lengthAdjust="spacing" font-size="58" font-weight="700" fill="#ece6d3">CHESS COACH</text>
-    <text x="44" y="204" textLength="400" lengthAdjust="spacing" font-size="17" fill="#b9c2b8">A desktop reviewer for your own Chess.com games</text>
-    <text x="44" y="230" textLength="380" lengthAdjust="spacing" font-size="14" fill="#7f8a80" letter-spacing="0.4">Stockfish on a background thread. Pygame in front.</text>
+    <text x="44" y="204" font-size="17" fill="#b9c2b8">A coach for your own Chess.com games</text>
+    <text x="44" y="230" font-size="14" fill="#7f8a80" letter-spacing="0.4">Stockfish facts. Fact-checked AI. Your patterns.</text>
   </g>
   <rect x="44" y="246" width="64" height="3" fill="#d9b45a"/>
 
