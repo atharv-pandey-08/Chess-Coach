@@ -1,7 +1,18 @@
-# ♞ Personal Chess Coach
+<div align="center">
 
-A Chess.com game reviewer with Stockfish analysis, move-by-move coaching, and an optional AI coach.
+<img src="docs/assets/banner.svg" alt="Personal Chess Coach: a coach for your own Chess.com games" width="100%">
+
+![Python](https://img.shields.io/badge/Python-3.12+-2f4a3a?style=flat-square&labelColor=121614&logo=python&logoColor=d9b45a)
+![Flask](https://img.shields.io/badge/Flask-2f4a3a?style=flat-square&labelColor=121614)
+![Stockfish](https://img.shields.io/badge/Stockfish-UCI-2f4a3a?style=flat-square&labelColor=121614)
+![Tests](https://img.shields.io/badge/tests-unittest-2f4a3a?style=flat-square&labelColor=121614)
+
+**Review your Chess.com games with Stockfish, get explanations that can't invent tactics,
+and find the patterns behind your mistakes.**
+
 It runs locally in your browser.
+
+</div>
 
 ## Features
 
@@ -147,3 +158,27 @@ web/              front-end (vanilla HTML/CSS/JS, no build step; pages.js = Insi
 main.py           Pygame desktop app
 tests/            unit tests:  python -m unittest discover tests
 ```
+
+## What I'd improve next
+
+I'd rather list the gaps than hide them.
+
+- **No public deployment yet.** It runs locally. The plan is Stockfish compiled to WebAssembly in
+  the browser, so a hosted version costs nothing to run.
+- **The AI fact-checker isn't measured yet.** The validator rejects invented moves, squares and
+  tactics, but I haven't built a fixed test set to report how often the raw model hallucinates
+  and how much the checker catches. That number is the next thing to add.
+- **No performance measurements.** Analysis runs at depth 14 with a 1.5 s cap per position; I
+  haven't benchmarked a full game or the batch analyser across machines.
+- **No CI.** The tests run locally (`python -m unittest discover tests`); a GitHub Actions
+  workflow should run them on every push.
+- **The Pygame app is legacy.** It shares the analysis core but has none of the coaching,
+  insights or puzzles; it will probably be removed.
+
+## Credits
+
+Built with [python-chess](https://python-chess.readthedocs.io/), [Flask](https://flask.palletsprojects.com/)
+and [Stockfish](https://stockfishchess.org/). Game data comes from the
+[Chess.com public API](https://www.chess.com/news/view/published-data-api). The optional AI coach uses
+Google Gemini. Piece images are fetched on first run from a third-party chess-pieces set and remain
+their authors' property. This project isn't affiliated with Chess.com or the Stockfish team.

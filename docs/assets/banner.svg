@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1000 300" width="1000" height="300" role="img" aria-label="Personal Chess Coach: a desktop reviewer for your own Chess.com games">
+  <style>
+    .bar { transform-origin: 0 240px; animation: bar 6s ease-in-out infinite; }
+    .route { animation: route 2.6s linear infinite; }
+    .pulse { animation: pulse 2.6s ease-in-out infinite; }
+    @keyframes bar { 0%,100% { transform: scaleY(.5); } 50% { transform: scaleY(.66); } }
+    @keyframes route { to { stroke-dashoffset: -26; } }
+    @keyframes pulse { 0%,100% { opacity:.25; } 50% { opacity:.6; } }
+    /* Respect the system "reduce motion" setting. */
+    @media (prefers-reduced-motion: reduce) { .bar, .route, .pulse { animation: none; } }
+  </style>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#0e1210"/><stop offset="0.6" stop-color="#141a17"/><stop offset="1" stop-color="#18201b"/></linearGradient>
+    <radialGradient id="vig" cx="0.5" cy="0.5" r="0.8"><stop offset="0.6" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity="0.55"/></radialGradient>
+    <linearGradient id="gl" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#d9b45a"/><stop offset="1" stop-color="#d9b45a" stop-opacity="0"/></linearGradient>
+    <linearGradient id="fadeIn" gradientUnits="userSpaceOnUse" x1="500" y1="0" x2="640" y2="0"><stop offset="0" stop-color="#000"/><stop offset="1" stop-color="#fff"/></linearGradient>
+    <mask id="bm"><rect width="1000" height="300" fill="url(#fadeIn)"/></mask>
+  </defs>
+  <rect width="1000" height="300" fill="url(#bg)"/>
+  <g mask="url(#bm)">
+    <rect x="520" y="30" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="564" y="30" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="608" y="30" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="652" y="30" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="696" y="30" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="740" y="30" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="784" y="30" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="828" y="30" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="872" y="30" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="916" y="30" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="520" y="70" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="564" y="70" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="608" y="70" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="652" y="70" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="696" y="70" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="740" y="70" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="784" y="70" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="828" y="70" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="872" y="70" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="916" y="70" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="520" y="110" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="564" y="110" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="608" y="110" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="652" y="110" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="696" y="110" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="740" y="110" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="784" y="110" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="828" y="110" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="872" y="110" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="916" y="110" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="520" y="150" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="564" y="150" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="608" y="150" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="652" y="150" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="696" y="150" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="740" y="150" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="784" y="150" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="828" y="150" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="872" y="150" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="916" y="150" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="520" y="190" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="564" y="190" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="608" y="190" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="652" y="190" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="696" y="190" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="740" y="190" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="784" y="190" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="828" y="190" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="872" y="190" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="916" y="190" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="520" y="230" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="564" y="230" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="608" y="230" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="652" y="230" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="696" y="230" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="740" y="230" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="784" y="230" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="828" y="230" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+    <rect x="872" y="230" width="44" height="40" fill="#3f6b52" opacity="0.42"/>
+    <rect x="916" y="230" width="44" height="40" fill="#ece6d3" opacity="0.16"/>
+  </g>
+
+  <!-- Highlighted start and end squares of the knight-style move -->
+  <rect class="pulse" x="608" y="190" width="44" height="40" fill="#d9b45a"/>
+  <rect class="pulse" x="652" y="110" width="44" height="40" fill="#d9b45a"/>
+  <g transform="translate(762 170) scale(1.0)" fill="#0b0e0c" stroke="#ece6d3" stroke-width="1.2" stroke-opacity="0.55"><circle cx="0" cy="-12" r="6"/><path d="M-6 -6 H6 L9 10 H-9 Z"/><rect x="-11" y="10" width="22" height="4" rx="1"/></g><g transform="translate(850 210) scale(1.0)" fill="#0b0e0c" stroke="#ece6d3" stroke-width="1.2" stroke-opacity="0.55"><circle cx="0" cy="-12" r="6"/><path d="M-6 -6 H6 L9 10 H-9 Z"/><rect x="-11" y="10" width="22" height="4" rx="1"/></g><g transform="translate(894 90) scale(1.0)" fill="#0b0e0c" stroke="#ece6d3" stroke-width="1.2" stroke-opacity="0.55"><path d="M-9 -14 h4 v4 h4 v-4 h4 v4 h4 v-4 h4 v10 h-20 Z"/><rect x="-7" y="-4" width="14" height="14"/><rect x="-11" y="10" width="22" height="4" rx="1"/></g><g transform="translate(586 90) scale(1.0)" fill="#0b0e0c" stroke="#ece6d3" stroke-width="1.2" stroke-opacity="0.55"><circle cx="0" cy="-12" r="6"/><path d="M-6 -6 H6 L9 10 H-9 Z"/><rect x="-11" y="10" width="22" height="4" rx="1"/></g>
+  <path class="route" d="M630 210 L630 130 L664 130" fill="none" stroke="#d9b45a" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" stroke-dasharray="10 8" opacity="0.95"/>
+  <path d="M662 122 L674 130 L662 138 Z" fill="#d9b45a"/>
+
+  <!-- Evaluation bar: the light part is White's share and slowly moves -->
+  <rect x="478" y="30" width="22" height="240" rx="3" fill="#050706" stroke="#ece6d3" stroke-opacity="0.35"/>
+  <g transform="translate(478 0)"><rect class="bar" x="0" y="30" width="22" height="240" rx="3" fill="#ece6d3" opacity="0.92" style="transform-box: view-box;"/></g>
+  <rect x="474" y="148" width="30" height="2" fill="#d9b45a"/>
+
+  <!-- Text -->
+  <g font-family="'Helvetica Neue', Helvetica, Arial, sans-serif">
+    <text x="44" y="110" textLength="380" lengthAdjust="spacing" font-size="22" font-weight="600" fill="#d9b45a" letter-spacing="3">PERSONAL</text>
+    <text x="42" y="168" textLength="400" lengthAdjust="spacing" font-size="58" font-weight="700" fill="#ece6d3">CHESS COACH</text>
+    <text x="44" y="204" font-size="17" fill="#b9c2b8">A coach for your own Chess.com games</text>
+    <text x="44" y="230" font-size="14" fill="#7f8a80" letter-spacing="0.4">Stockfish facts. Fact-checked AI. Your patterns.</text>
+  </g>
+  <rect x="44" y="246" width="64" height="3" fill="#d9b45a"/>
+
+  <rect width="1000" height="300" fill="url(#vig)"/>
+  <g fill="none" stroke="#d9b45a" stroke-width="2" opacity="0.8"><path d="M10 30 V10 H30"/><path d="M970 10 H990 V30"/><path d="M10 270 V290 H30"/><path d="M990 270 V290 H970"/></g>
+</svg>
