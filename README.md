@@ -14,6 +14,43 @@ It runs locally in your browser.
 
 </div>
 
+<img src="docs/assets/review.png" alt="Reviewing a game: the coach explains that 8...Na5 walks into the b4 fork" width="100%">
+
+## Results
+
+Measured, not claimed. Every number below comes from a script in this repo.
+
+**Does the AI coach say things that aren't true?** 40 real mistakes from my games, balanced across the
+nine mistake types (`evals/`). Each explanation is checked against the board by a checker that is
+independent of the coach's own validator.
+
+| | Names the move that decided the position | Claims a tactic the detectors didn't find | Says something false on the board |
+| --- | ---: | ---: | ---: |
+| Old design: model gets the FEN and the engine line | 35% | 22% | 2% |
+| New design: first draft from the fact sheet | 100% | 0% | 3% |
+| **New design: what the user sees** (after the validator) | **100%** | **0%** | **0%** |
+
+The old prompt rarely said anything outright false; it mostly stayed vague. When it did, it invented
+an illegal move (`...Bxb4`). The new coach's one false draft ("your knight on f3", when there was no
+knight there) was rejected by the validator and rewritten correctly.
+
+**Engine pass.** Stockfish analyses every position at depth 14 with a 1.5 s cap. Searching the
+second-best move only where it can change a verdict (instead of `multipv=2` everywhere), on 5 games
+(`scripts/compare_engine_modes.py`):
+
+| | Time | Same verdict as a depth-20 search | Game-accuracy error vs depth 20 |
+| --- | ---: | ---: | ---: |
+| Before | 73.0 s | 74.4% | 1.5 points |
+| After | **26.5 s (64% less)** | 72.1% | 1.6 points |
+
+A small accuracy cost for a large speed-up. Even the slower method agrees with a deeper search on
+only three moves in four: verdicts close to a threshold are noisy at depth 14, whatever you do.
+Single-threaded Stockfish turned out to be as fast as 8 threads at this depth, and makes reviews
+reproducible: the same game gets identical evaluations every time.
+
+**Other stages** (`scripts/benchmark.py`, Apple Silicon): building a review takes 10 ms per game, a
+fact sheet with its threat search 0.6 s per mistake, and the whole insights profile over 50 games 1.6 s.
+
 ## Features
 
 - **Insights across all your games:** what *kind* of mistake costs you most (hanging pieces,
@@ -54,6 +91,23 @@ Manual alternative:
 python3 -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python server.py
 ```
+
+<details>
+<summary><b>More screenshots</b>: Insights and Puzzles</summary>
+
+<img src="docs/assets/insights.png" alt="Insights: mistake categories with real examples, by clock, phase and opening" width="100%">
+<img src="docs/assets/puzzles.png" alt="A puzzle built from one of your own mistakes" width="100%">
+
+</details>
+
+### Docker
+
+```bash
+docker build -t chess-coach .
+docker run -p 5050:5050 -v chess-coach-data:/data chess-coach      # add -e GEMINI_API_KEY=... for the AI coach
+```
+
+The image bundles Stockfish and runs the app under gunicorn. CI builds it and smoke-tests it on every push.
 
 ## How the coach works
 
@@ -117,6 +171,19 @@ when the data supports them (minimum sample sizes and a real gap).
 Puzzles use a simplified **SM-2** schedule (`srs.py`): solved puzzles come back after 1 day,
 3 days, then a growing interval; a miss brings the puzzle back in 10 minutes.
 
+## Engineering
+
+- **CI** (GitHub Actions) on Python 3.11 and 3.13: `ruff` lint, `mypy` type check, the unit tests, and
+  end-to-end tests against a real Stockfish. A second job builds the Docker image and smoke-tests it.
+- **Tests that don't need the network or an engine** for everything except the end-to-end suite:
+  fake evaluations drive the classifier, coach, validator, insights and scheduler.
+- **Reproducible measurements**: `scripts/benchmark.py` (per-stage timings),
+  `scripts/compare_engine_modes.py` (engine settings head-to-head) and `evals/` (AI hallucination
+  rate), all runnable by anyone with the repo.
+- **Design choices worth arguing about**: pure functions for everything derived from engine output
+  (so the UI can poll a half-finished analysis); one process on purpose (jobs, batch queue and the
+  coach's engine live in memory); single-threaded Stockfish for reproducible reviews.
+
 ## Configuration
 
 Copy `.env.example` to `.env`. Every setting is optional:
@@ -130,14 +197,6 @@ Copy `.env.example` to `.env`. Every setting is optional:
 | `ANALYSIS_DEPTH` | `14` | Stockfish depth (higher is stronger and slower) |
 | `STOCKFISH_PATH` | auto-detected | path to the engine |
 | `PORT` | `5050` | web server port |
-
-## Desktop app
-
-The original Pygame interface still works and uses the same analysis core:
-
-```bash
-.venv/bin/python main.py
-```
 
 ## Project layout
 
@@ -155,7 +214,6 @@ chess_coach/      shared core
   config.py       .env / environment settings
 server.py         Flask web app and JSON API
 web/              front-end (vanilla HTML/CSS/JS, no build step; pages.js = Insights + Puzzles)
-main.py           Pygame desktop app
 tests/            unit tests:  python -m unittest discover tests
 ```
 
@@ -165,20 +223,18 @@ I'd rather list the gaps than hide them.
 
 - **No public deployment yet.** It runs locally. The plan is Stockfish compiled to WebAssembly in
   the browser, so a hosted version costs nothing to run.
-- **The AI fact-checker isn't measured yet.** The validator rejects invented moves, squares and
-  tactics, but I haven't built a fixed test set to report how often the raw model hallucinates
-  and how much the checker catches. That number is the next thing to add.
-- **No performance measurements.** Analysis runs at depth 14 with a 1.5 s cap per position; I
-  haven't benchmarked a full game or the batch analyser across machines.
-- **No CI.** The tests run locally (`python -m unittest discover tests`); a GitHub Actions
-  workflow should run them on every push.
-- **The Pygame app is legacy.** It shares the analysis core but has none of the coaching,
-  insights or puzzles; it will probably be removed.
+- **The eval set is small.** 40 positions from one player's games is enough to see the difference
+  between the two designs, not to estimate small rates precisely. The "undetected tactic" figure is
+  an upper bound: the detectors can miss a real tactic (in a manual read, most flagged claims were
+  wrong, a few were loose wording).
+- **Depth-14 verdicts are noisy.** About a quarter of verdicts change against a depth-20 search. Running
+  deeper on the moves near a threshold would fix most of that for little extra time.
+- **Benchmarks are from one machine.** All timings above are from an Apple Silicon laptop.
 
 ## Credits
 
 Built with [python-chess](https://python-chess.readthedocs.io/), [Flask](https://flask.palletsprojects.com/)
 and [Stockfish](https://stockfishchess.org/). Game data comes from the
 [Chess.com public API](https://www.chess.com/news/view/published-data-api). The optional AI coach uses
-Google Gemini. Piece images are fetched on first run from a third-party chess-pieces set and remain
-their authors' property. This project isn't affiliated with Chess.com or the Stockfish team.
+Google Gemini. Piece images (in `assets/`) come from a third-party chess-pieces set and remain their
+authors' property. This project isn't affiliated with Chess.com or the Stockfish team.

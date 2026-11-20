@@ -43,6 +43,28 @@ class Motif:
         return asdict(self)
 
 
+def ptype(board: chess.Board, sq: chess.Square) -> chess.PieceType:
+    """Type of the piece on a square the caller knows is occupied."""
+    pt = board.piece_type_at(sq)
+    if pt is None:
+        raise ValueError(f"expected a piece on {chess.square_name(sq)}")
+    return pt
+
+
+def piece_on(board: chess.Board, sq: chess.Square) -> chess.Piece:
+    p = board.piece_at(sq)
+    if p is None:
+        raise ValueError(f"expected a piece on {chess.square_name(sq)}")
+    return p
+
+
+def king_sq(board: chess.Board, color: chess.Color) -> chess.Square:
+    k = board.king(color)
+    if k is None:
+        raise ValueError("position has no king")
+    return k
+
+
 def label(board: chess.Board, sq: chess.Square) -> str:
     p = board.piece_at(sq)
     return f"the {NAME[p.piece_type]} on {chess.square_name(sq)}" if p else chess.square_name(sq)
@@ -79,7 +101,7 @@ def _cheapest_capture(board: chess.Board, square: chess.Square) -> chess.Move | 
             continue
         if mv.promotion and mv.promotion != chess.QUEEN:
             continue
-        v = VALUE[board.piece_type_at(mv.from_square)]
+        v = VALUE[ptype(board, mv.from_square)]
         if v < best_val:
             best, best_val = mv, v
     return best
@@ -98,10 +120,10 @@ def see(board: chess.Board, move: chess.Move) -> int:
     gains = [first]
     b = board.copy(stack=False)
     b.push(move)
-    on_square = VALUE[b.piece_type_at(to)]
+    on_square = VALUE[ptype(b, to)]
     while (cap := _cheapest_capture(b, to)) is not None:
         gains.append(on_square - gains[-1])
-        on_square = VALUE[chess.QUEEN] if cap.promotion else VALUE[b.piece_type_at(cap.from_square)]
+        on_square = VALUE[chess.QUEEN] if cap.promotion else VALUE[ptype(b, cap.from_square)]
         b.push(cap)
     for d in range(len(gains) - 1, 0, -1):
         gains[d - 1] = -max(-gains[d - 1], gains[d])
@@ -142,10 +164,10 @@ def hanging(board: chess.Board, color: chess.Color) -> list[tuple[chess.Square, 
 
 def _is_target(after: chess.Board, attacker_sq: chess.Square, target_sq: chess.Square) -> bool:
     """Is the piece on target_sq something the attacker genuinely threatens to win?"""
-    target = after.piece_at(target_sq)
+    target = piece_on(after, target_sq)
     if target.piece_type == chess.KING:
         return True
-    if VALUE[target.piece_type] > VALUE[after.piece_type_at(attacker_sq)]:
+    if VALUE[target.piece_type] > VALUE[ptype(after, attacker_sq)]:
         return True
     b = _flipped(after)
     if b is None:
@@ -170,9 +192,9 @@ def detect_fork(before: chess.Board, move: chess.Move, san: str, after: chess.Bo
     # Two pawns isn't a fork worth naming.
     if sum(1 for sq in targets if after.piece_type_at(sq) != chess.PAWN) < 2:
         return []
-    targets.sort(key=lambda s: -VALUE[after.piece_type_at(s)])
+    targets.sort(key=lambda s: -VALUE[ptype(after, s)])
     names = " and ".join(label(after, s) for s in targets[:3])
-    piece = NAME[after.piece_type_at(to)]
+    piece = NAME[ptype(after, to)]
     return [Motif("fork", f"{san} forks {names} with the {piece}.",
                   [chess.square_name(to)] + [chess.square_name(s) for s in targets[:3]])]
 
@@ -191,7 +213,7 @@ def _ray(sq: chess.Square, df: int, dr: int):
 
 def _line_motifs(after: chess.Board, from_sq: chess.Square, side: chess.Color, san: str) -> list[Motif]:
     """Pins and skewers by the slider standing on from_sq."""
-    pt = after.piece_type_at(from_sq)
+    pt = ptype(after, from_sq)
     out: list[Motif] = []
     for df, dr in _RAYS.get(pt, []):
         seen = []
@@ -206,7 +228,7 @@ def _line_motifs(after: chess.Board, from_sq: chess.Square, side: chess.Color, s
                 break
         if len(seen) < 2:
             continue
-        front, back = (after.piece_at(s) for s in seen)
+        front, back = (piece_on(after, s) for s in seen)
         fv, bv = VALUE[front.piece_type], VALUE[back.piece_type]
         names = [chess.square_name(from_sq)] + [chess.square_name(s) for s in seen]
         if front.piece_type == chess.PAWN:
@@ -244,9 +266,9 @@ def detect_discovered(before: chess.Board, move: chess.Move, san: str, after: ch
 def detect_mate(before: chess.Board, move: chess.Move, san: str, after: chess.Board) -> list[Motif]:
     if not after.is_checkmate():
         return []
-    king = after.king(after.turn)
+    king = king_sq(after, after.turn)
     checker = next(iter(after.checkers()))
-    ct = after.piece_type_at(checker)
+    ct = ptype(after, checker)
     home = 0 if after.turn == chess.WHITE else 7
     if ct in (chess.ROOK, chess.QUEEN) and chess.square_rank(king) == home == chess.square_rank(checker):
         return [Motif("back_rank_mate", f"{san} is a back-rank mate: the king is boxed in by its own pawns.",
@@ -263,8 +285,8 @@ def detect_material(before: chess.Board, move: chess.Move, san: str, after: ches
     if before.move_stack and before.peek().to_square == move.to_square:
         return []  # a recapture finishes a trade; it doesn't "win" anything
     gain = see(before, move)
-    captured = 1 if before.is_en_passant(move) else VALUE[before.piece_type_at(move.to_square)]
-    name = "pawn" if before.is_en_passant(move) else NAME[before.piece_type_at(move.to_square)]
+    captured = 1 if before.is_en_passant(move) else VALUE[ptype(before, move.to_square)]
+    name = "pawn" if before.is_en_passant(move) else NAME[ptype(before, move.to_square)]
     if gain >= captured:
         return [Motif("wins_material", f"{san} wins a free {name}.", [chess.square_name(move.to_square)], gain)]
     if gain > 0:
