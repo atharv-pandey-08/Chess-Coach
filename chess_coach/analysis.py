@@ -13,12 +13,14 @@ pawns in an equal position decides the game. This mirrors Lichess / Chess.com.
 
 from __future__ import annotations
 
+import contextlib
 import io
 import math
 import re
 import threading
+from collections.abc import Callable, Sequence
 from dataclasses import dataclass, field
-from typing import Any, Callable
+from typing import Any
 
 import chess
 import chess.engine
@@ -133,10 +135,10 @@ def _terminal_eval(board: chess.Board) -> dict | None:
 
 def _info_to_eval(info: chess.engine.InfoDict) -> tuple[int | None, int | None, float]:
     score = info["score"].white()
-    if score.is_mate():
-        mate = score.mate()
+    mate = score.mate()
+    if mate is not None:
         return None, mate, 100.0 if mate > 0 else 0.0
-    cp = score.score()
+    cp = score.score(mate_score=100_000)
     return cp, None, win_pct_from_cp(cp)
 
 
@@ -171,26 +173,34 @@ class EngineJob:
                     "Stockfish isn't installed. On macOS run `brew install stockfish`, "
                     "or set STOCKFISH_PATH in your .env file.")
             engine = chess.engine.SimpleEngine.popen_uci(engine_path)
-            try:
+            with contextlib.suppress(chess.engine.EngineError):
                 engine.configure({"Threads": config.ENGINE_THREADS, "Hash": config.ENGINE_HASH_MB})
-            except chess.engine.EngineError:
-                pass
             # Depth gives consistent quality; the time cap stops rare complex positions stalling.
             limit = chess.engine.Limit(depth=self.depth, time=1.5)
+            second_limit = chess.engine.Limit(depth=min(10, self.depth), time=0.5)
 
             for i, board in enumerate(self.parsed.boards):
                 if self._cancel.is_set():
                     raise RuntimeError("Analysis cancelled.")
                 ev = _terminal_eval(board)
                 if ev is None:
-                    # multipv=2 lets us spot "only moves" (Great) and forced positions.
-                    infos = engine.analyse(board, limit, multipv=2)
-                    cp, mate, wp = _info_to_eval(infos[0])
-                    pv = [m.uci() for m in infos[0].get("pv", [])[:8]]
-                    second_wp = _info_to_eval(infos[1])[2] if len(infos) > 1 and "score" in infos[1] else None
+                    info = engine.analyse(board, limit)
+                    cp, mate, wp = _info_to_eval(info)
+                    pv = [m.uci() for m in info.get("pv", [])[:8]]
+                    best = pv[0] if pv else None
+                    # The second-best score only matters for "Great" (the only good move), and that
+                    # label is only possible when the player actually found the engine's move. So
+                    # search the alternatives only there, instead of multipv=2 everywhere (~2x faster).
+                    second_wp = None
+                    played = self.parsed.moves[i].uci() if i < len(self.parsed.moves) else None
+                    if best is not None and played == best and board.legal_moves.count() > 1:
+                        others = [m for m in board.legal_moves if m.uci() != best]
+                        # Shallower: we only need to know whether the gap is big (>= 15% win chance).
+                        alt = engine.analyse(board, second_limit, root_moves=others)
+                        if "score" in alt:
+                            second_wp = round(_info_to_eval(alt)[2], 2)
                     ev = {"cp": cp, "mate": mate, "wp": round(wp, 2), "terminal": None,
-                          "best": pv[0] if pv else None, "pv": pv,
-                          "second_wp": round(second_wp, 2) if second_wp is not None else None}
+                          "best": best, "pv": pv, "second_wp": second_wp}
                 self.evals[i] = ev
                 self.progress = i + 1
                 if on_progress:
@@ -199,16 +209,21 @@ class EngineJob:
             self.error = str(exc) if isinstance(exc, RuntimeError) else f"Stockfish analysis failed: {exc}"
         finally:
             if engine is not None:
-                try:
+                with contextlib.suppress(Exception):
                     engine.quit()
-                except Exception:
-                    pass
             self.done = True
 
 
 # ---------------------------------------------------------------------------
 # Review construction
 # ---------------------------------------------------------------------------
+
+def _ptype(board: chess.Board, sq: chess.Square) -> chess.PieceType:
+    pt = board.piece_type_at(sq)
+    if pt is None:
+        raise ValueError(f"expected a piece on {chess.square_name(sq)}")
+    return pt
+
 
 def _pov(wp_white: float, color: chess.Color) -> float:
     return wp_white if color == chess.WHITE else 100 - wp_white
@@ -261,7 +276,7 @@ def _is_sacrifice(before: chess.Board, move: chess.Move) -> bool:
     if not attackers:
         return False
     defenders = after.attackers(piece.color, move.to_square)
-    cheapest = min(PIECE_VALUES[after.piece_at(s).piece_type] or 99 for s in attackers)
+    cheapest = min(PIECE_VALUES[_ptype(after, s)] or 99 for s in attackers)
     gained = PIECE_VALUES[captured.piece_type] if captured else 0
     return (not defenders or cheapest < value) and value - gained >= 2
 
@@ -334,8 +349,7 @@ def _comment(cls: str, *, who: str, your: str, san: str, best_san: str | None,
     if cls == "Forced":
         return f"{san} was the only legal move."
     if cls == "Brilliant":
-        piece = before.piece_at(move.from_square)
-        parts.append(f"Brilliant! {san} sacrifices the {PIECE_NAMES[piece.piece_type]}, "
+        parts.append(f"Brilliant! {san} sacrifices the {PIECE_NAMES[_ptype(before, move.from_square)]}, "
                      f"and it's the strongest continuation.")
     elif cls == "Great":
         parts.append(f"Great find. {san} is the only move that keeps {your.lower()} position "
@@ -362,13 +376,14 @@ def _comment(cls: str, *, who: str, your: str, san: str, best_san: str | None,
         try:
             reply = after.parse_san(reply_line[0])
             victim = after.piece_at(reply.to_square)
-            gained = PIECE_VALUES[before.piece_at(move.to_square).piece_type] if before.is_capture(move) \
-                and before.piece_at(move.to_square) else 0
+            victim_name = PIECE_NAMES[victim.piece_type] if victim else ""
+            captured_pt = before.piece_type_at(move.to_square)
+            gained = PIECE_VALUES[captured_pt] if captured_pt else 0
             lost = PIECE_VALUES[victim.piece_type] if victim and victim.color == mover else 0
             forked = _forked_pieces(after, reply, mover)
             if lost >= 3 and lost - gained >= 2:  # a real material loss, not a trade
                 parts.append(f"It lets the opponent play {reply_line[0]}, winning {your.lower()} "
-                             f"{PIECE_NAMES[victim.piece_type]}.")
+                             f"{victim_name}.")
             elif forked:
                 parts.append(f"It walks into {reply_line[0]}, forking {your.lower()} "
                              f"{' and '.join(forked)}.")
@@ -404,9 +419,10 @@ def _forked_pieces(board: chess.Board, reply: chess.Move, victim_color: chess.Co
     hits = []
     for sq in after.attacks(reply.to_square):
         p = after.piece_at(sq)
-        if p and p.color == victim_color and (p.piece_type == chess.KING or
-                                              (PIECE_VALUES[p.piece_type] >= 3 and
-                                               (PIECE_VALUES[p.piece_type] > a_val or not after.attackers(victim_color, sq)))):
+        if not p or p.color != victim_color:
+            continue
+        value = PIECE_VALUES[p.piece_type]
+        if p.piece_type == chess.KING or (value >= 3 and (value > a_val or not after.attackers(victim_color, sq))):
             hits.append(p)
     if len(hits) < 2:
         return []
@@ -414,7 +430,7 @@ def _forked_pieces(board: chess.Board, reply: chess.Move, victim_color: chess.Co
     return [PIECE_NAMES[p.piece_type] for p in hits[:2]]
 
 
-def build_review(pgn_text: str, evals: list[dict | None], *, user_color: str = "white",
+def build_review(pgn_text: str, evals: Sequence[dict | None], *, user_color: str = "white",
                  names: tuple[str, str] | None = None, parsed: ParsedGame | None = None) -> dict[str, Any]:
     """Turn per-position evaluations into a full, UI-ready review.
 
@@ -425,7 +441,7 @@ def build_review(pgn_text: str, evals: list[dict | None], *, user_color: str = "
     w_name = (names or (parsed.headers.get("White", "White"), ""))[0]
     b_name = (names or ("", parsed.headers.get("Black", "Black")))[1]
 
-    positions = []
+    positions: list[dict[str, Any]] = []
     for i, board in enumerate(parsed.boards):
         ev = evals[i] if i < len(evals) else None
         positions.append({
@@ -434,13 +450,13 @@ def build_review(pgn_text: str, evals: list[dict | None], *, user_color: str = "
                 "cp": ev["cp"], "mate": ev["mate"], "wp": ev["wp"], "terminal": ev["terminal"],
                 "text": format_eval(ev),
                 "best": ev["best"],
-                "best_san": (_san_line(board, [ev["best"]], 1) or [None])[0] if ev.get("best") else None,
+                "best_san": next(iter(_san_line(board, [ev["best"]], 1)), None) if ev.get("best") else None,
                 "line": _san_line(board, ev.get("pv", []), 6),
             },
         })
 
-    moves = []
-    per_color = {chess.WHITE: [], chess.BLACK: []}
+    moves: list[dict[str, Any]] = []
+    per_color: dict[chess.Color, list[float]] = {chess.WHITE: [], chess.BLACK: []}
     phase_accs: dict[str, list[float]] = {"opening": [], "middlegame": [], "endgame": []}
     counts = {chess.WHITE: {c: 0 for c in CLASSIFICATIONS}, chess.BLACK: {c: 0 for c in CLASSIFICATIONS}}
     last_clock = {chess.WHITE: parsed.base_time, chess.BLACK: parsed.base_time}
@@ -452,8 +468,9 @@ def build_review(pgn_text: str, evals: list[dict | None], *, user_color: str = "
 
         clock = parsed.clocks[i]
         spent = None
-        if clock is not None and last_clock[mover] is not None:
-            spent = max(0.0, round(last_clock[mover] - clock + (parsed.increment if i >= 2 else 0), 1))
+        prev_clock = last_clock[mover]
+        if clock is not None and prev_clock is not None:
+            spent = max(0.0, round(prev_clock - clock + (parsed.increment if i >= 2 else 0), 1))
         if clock is not None:
             last_clock[mover] = clock
 

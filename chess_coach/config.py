@@ -42,7 +42,9 @@ def _int_env(name: str, default: int) -> int:
 
 DEFAULT_USERNAME: str = os.environ.get("CHESS_COM_USERNAME", "Atrowk")
 ANALYSIS_DEPTH: int = _int_env("ANALYSIS_DEPTH", 14)
-ENGINE_THREADS: int = _int_env("ENGINE_THREADS", max(1, min(8, (os.cpu_count() or 2) - 1)))
+# One thread: at depth 14 extra threads gave no speed-up in benchmarks (scripts/benchmark.py),
+# and a single-threaded fixed-depth search is reproducible: the same game gets the same review.
+ENGINE_THREADS: int = _int_env("ENGINE_THREADS", 1)
 ENGINE_HASH_MB: int = _int_env("ENGINE_HASH_MB", 128)
 ARCHIVES_TO_SCAN: int = _int_env("ARCHIVES_TO_SCAN", 3)
 MAX_GAMES: int = _int_env("MAX_GAMES", 100)

@@ -1,0 +1,59 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: |
+            requirements.txt
+            requirements-dev.txt
+
+      - name: Install Stockfish (for the end-to-end engine tests)
+        run: sudo apt-get update -q && sudo apt-get install -y -q stockfish
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt -r requirements-dev.txt
+
+      - name: Lint
+        run: ruff check chess_coach server.py tests evals scripts
+
+      - name: Type check
+        run: mypy
+
+      - name: Tests
+        env:
+          STOCKFISH_PATH: /usr/games/stockfish
+        run: python -m unittest discover -v tests
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t chess-coach .
+      - name: Smoke test
+        run: |
+          docker run -d --name coach -p 5050:5050 chess-coach
+          for i in $(seq 1 30); do curl -sf localhost:5050/api/config && break; sleep 1; done
+          curl -sf localhost:5050/api/config | python3 -c "import json,sys; c=json.load(sys.stdin); assert c['engine'], c; print('engine found:', c['engine_path'])"
+          curl -sf localhost:5050/ | grep -q "Chess Coach"
+          docker logs coach
+

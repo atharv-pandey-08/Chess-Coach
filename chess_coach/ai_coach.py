@@ -53,7 +53,8 @@ class CoachNote(BaseModel):
     headline: str = Field(description="The verdict in at most 10 words, e.g. 'This walks into a knight fork.'")
     what_happened: str = Field(description="1-2 sentences: what the move did and what it allows, using the facts.")
     what_was_missed: str = Field(description="1 sentence on the threat or idea that was overlooked, or '' if nothing.")
-    better_idea: str = Field(description="1-2 sentences on the better move and why it works, or '' if the move was best.")
+    better_idea: str = Field(
+        description="1-2 sentences on the better move and why it works, or '' if the move was best.")
     lesson: str = Field(description="One short, reusable habit to take away from this move.")
 
 
@@ -191,8 +192,9 @@ def _ask_llm(prompt: str, model: str, schema: type[BaseModel] = CoachNote) -> di
 
 def _is_transient(exc: Exception) -> bool:
     text = str(exc)
-    return any(code in text for code in ("429", "503", "504", "DEADLINE", "404", "NOT_FOUND", "UNAVAILABLE", "RESOURCE_EXHAUSTED",
-                                         "overloaded", "timed out", "Timeout", "timeout"))
+    markers = ("429", "503", "504", "DEADLINE", "404", "NOT_FOUND", "UNAVAILABLE", "RESOURCE_EXHAUSTED",
+               "overloaded", "timed out", "timeout")
+    return any(code in text for code in markers) or "timeout" in text.lower()
 
 
 _cooldown: dict[str, float] = {}  # model -> time.monotonic() until which it's skipped
@@ -217,7 +219,7 @@ def _ask_with_fallback(prompt: str, schema: type[BaseModel] = CoachNote,
     ready = [m for m in models if _cooldown.get(m, 0) <= time.monotonic()] or models
     last: Exception | None = None
     for model in ready:
-        for attempt in range(2):
+        for _attempt in range(2):
             if deadline and time.monotonic() > deadline:
                 raise TimeoutError("The AI coach timed out.")
             try:
@@ -334,9 +336,10 @@ def rule_based(f: dict) -> dict:
         better = f"{best['move']} was better. {best['summary']}"
 
     kind = _main_kind(f)
-    lesson = LESSONS.get(kind) or ("Every move, ask 'what is my opponent threatening?' before your own plan."
-                                   if cls in ("Blunder", "Mistake") else
-                                   "Keep improving your worst-placed piece when there's nothing forcing.")
+    default_lesson = ("Every move, ask 'what is my opponent threatening?' before your own plan."
+                      if cls in ("Blunder", "Mistake") else
+                      "Keep improving your worst-placed piece when there's nothing forcing.")
+    lesson = (LESSONS.get(kind) if kind else None) or default_lesson
     return {"headline": headline, "what_happened": happened, "what_was_missed": missed,
             "better_idea": better, "lesson": lesson}
 
@@ -348,20 +351,24 @@ def rule_based(f: dict) -> dict:
 # ---------------------------------------------------------------------------
 
 class StoryNote(BaseModel):
-    summary: str = Field(description="3-4 sentences telling how the game was won and lost, turning point by turning point.")
+    summary: str = Field(
+        description="3-4 sentences telling how the game was won and lost, turning point by turning point.")
     lesson: str = Field(description="The one habit that would have changed this game the most.")
 
 
 def _merge_vocab(vocabs: list[dict]) -> dict:
-    out = {"moves": set(), "tactics": set(), "squares": set(), "pieces": {}}
+    moves: set[str] = set()
+    kinds: set[str] = set()
+    squares: set[str] = set()
+    pieces: dict[str, set[str]] = {}
     for v in vocabs:
-        out["moves"].update(v["moves"])
-        out["tactics"].update(v["tactics"])
-        out["squares"].update(v["squares"])
+        moves.update(v["moves"])
+        kinds.update(v["tactics"])
+        squares.update(v["squares"])
         for sq, names in v["pieces"].items():
-            out["pieces"].setdefault(sq, set()).update(names)
-    return {"moves": out["moves"], "tactics": out["tactics"], "squares": out["squares"],
-            "pieces": {k: sorted(v) for k, v in out["pieces"].items()}}
+            pieces.setdefault(sq, set()).update(names)
+    return {"moves": moves, "tactics": kinds, "squares": squares,
+            "pieces": {k: sorted(v) for k, v in pieces.items()}}
 
 
 def explain_story(story: dict, *, rating: int | None = None, result: str = "") -> dict[str, Any] | None:

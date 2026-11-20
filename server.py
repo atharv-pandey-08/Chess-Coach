@@ -8,19 +8,17 @@ from __future__ import annotations
 
 import os
 import threading
+import time
 import webbrowser
 from concurrent.futures import ThreadPoolExecutor
 
-from flask import Flask, jsonify, request, send_from_directory
-
-import time
-
 import chess
+from flask import Flask, jsonify, request, send_from_directory
 
 from chess_coach import ai_coach, analysis, chesscom, config, facts, insights, srs, storage, story
 
 app = Flask(__name__, static_folder="web", static_url_path="")
-app.json.sort_keys = False
+app.json.sort_keys = False  # type: ignore[attr-defined]  # DefaultJSONProvider has it
 storage.init()
 
 # One engine at a time: Stockfish already uses several threads per search.
@@ -192,7 +190,7 @@ def api_coach():
         return _error("Unknown move.")
     if want_ai and not ai_coach.available():
         return _error("AI coach is off. Add GEMINI_API_KEY to your .env file to enable it.", 503)
-    ctx, err = _analysed(body.get("game_id"))
+    ctx, err = _analysed(str(body.get("game_id", "")))
     if err:
         return err
     game, parsed, evals, review = ctx
@@ -340,9 +338,10 @@ def _extract_all(username: str) -> tuple[list[dict], list[dict]]:
     done = storage.analysed_ids([g["id"] for g in games], config.ANALYSIS_DEPTH)
     extracted = []
     for g in games:
-        if g["id"] in done:
+        evals = storage.get_analysis(g["id"], config.ANALYSIS_DEPTH) if g["id"] in done else None
+        if evals is not None:
             try:
-                extracted.append(insights.extract_game(g, storage.get_analysis(g["id"], config.ANALYSIS_DEPTH)))
+                extracted.append(insights.extract_game(g, evals))
             except Exception:
                 continue  # a malformed game shouldn't hide everyone else's stats
     return games, extracted
@@ -446,7 +445,7 @@ def pieces(name: str):
 
 @app.get("/")
 def index():
-    return send_from_directory(app.static_folder, "index.html")
+    return send_from_directory(app.static_folder or "web", "index.html")
 
 
 def main() -> None:

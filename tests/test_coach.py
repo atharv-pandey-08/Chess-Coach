@@ -2,7 +2,8 @@
 
 import unittest
 
-from chess_coach import ai_coach, analysis as a, facts, story
+from chess_coach import ai_coach, facts, story
+from chess_coach import analysis as a
 from tests.test_analysis import SCHOLARS_MATE, ev
 
 
