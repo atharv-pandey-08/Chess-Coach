@@ -10,7 +10,8 @@
 **Review your Chess.com games with Stockfish, get explanations that can't invent tactics,
 and find the patterns behind your mistakes.**
 
-It runs locally in your browser.
+**[Try the live demo →](https://chess-coach-7gd6.onrender.com)** &nbsp;·&nbsp; free hosting, so the first visit can take
+~50 s to wake up. Or run it locally in your browser.
 
 </div>
 
