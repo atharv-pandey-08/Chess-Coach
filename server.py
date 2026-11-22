@@ -14,12 +14,23 @@ from concurrent.futures import ThreadPoolExecutor
 
 import chess
 from flask import Flask, jsonify, request, send_from_directory
+from werkzeug.middleware.proxy_fix import ProxyFix
 
-from chess_coach import ai_coach, analysis, chesscom, config, facts, insights, srs, storage, story
+from chess_coach import ai_coach, analysis, chesscom, config, facts, insights, limits, srs, storage, story
 
 app = Flask(__name__, static_folder="web", static_url_path="")
 app.json.sort_keys = False  # type: ignore[attr-defined]  # DefaultJSONProvider has it
+app.config["MAX_CONTENT_LENGTH"] = 256 * 1024  # a pasted PGN is a few KB
+if config.PUBLIC_DEMO:
+    # Behind the host's proxy every request comes from the proxy; trust its X-Forwarded-For
+    # so the AI limits apply per visitor. Only in public mode: locally the header could be faked.
+    app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1)  # type: ignore[method-assign]
 storage.init()
+_ai_limit = limits.DailyLimiter(config.AI_PER_CLIENT_DAY, config.AI_PER_DAY)
+LIMIT_MESSAGE = {
+    "client": "You've used today's AI explanations for this demo; showing the engine coach instead.",
+    "server": "The demo's AI budget for today is used up; showing the engine coach instead.",
+}
 
 # One engine at a time: Stockfish already uses several threads per search.
 _executor = ThreadPoolExecutor(max_workers=1, thread_name_prefix="stockfish")
@@ -63,6 +74,9 @@ def api_config():
         "engine_path": config.find_stockfish(),
         "ai": ai_coach.available(),
         "depth": config.ANALYSIS_DEPTH,
+        "public": config.PUBLIC_DEMO,
+        "ai_left": _ai_limit.remaining(request.remote_addr or ""),
+        "batch_max": config.BATCH_MAX,
     })
 
 
@@ -202,9 +216,12 @@ def api_coach():
         return jsonify({**cached, "cached": True})
 
     f = facts.build_facts(parsed, evals, review, ply, user_color=game["user_color"], engine=_coach_engine)
-    note = ai_coach.explain(f, rating=_user_rating(game), use_ai=want_ai)
+    limited = want_ai and _ai_limit.take(request.remote_addr or "")
+    note = ai_coach.explain(f, rating=_user_rating(game), use_ai=want_ai and not limited)
     payload = _coach_payload(f, note)
-    if want_ai and note["source"] != "ai":
+    if limited:
+        payload["ai_error"] = LIMIT_MESSAGE[limited]
+    elif want_ai and note["source"] != "ai":
         reason = next((r["error"] for r in note["rejected"] if "error" in r), None)
         payload["ai_error"] = ("The AI service is busy right now; showing the engine coach instead."
                                if reason and ai_coach._is_transient(Exception(reason)) else
@@ -231,6 +248,10 @@ def api_story(game_id: str):
         "turning_points": [{k: v for k, v in p.items() if k != "facts"} for p in st["turning_points"]],
         "ai": None,
     }
+    limited = want_ai and _ai_limit.take(request.remote_addr or "")
+    if limited:
+        payload["ai_error"] = LIMIT_MESSAGE[limited]
+        return jsonify({**payload, "cached": False})
     if want_ai:
         payload["ai"] = ai_coach.explain_story(st, rating=_user_rating(game),
                                                result=story._result_sentence(review, game["user_color"]))
@@ -309,12 +330,34 @@ class Batch:
 _batch = Batch()
 
 
+def warm_start() -> None:
+    """Public demo: analyse the default player's recent games so Insights and Puzzles have
+    something to show the first visitor (the Space's disk is wiped on every restart)."""
+    if not (config.WARM_START_GAMES and config.find_stockfish()):
+        return
+
+    def run() -> None:
+        try:
+            games = chesscom.fetch_recent_games(config.DEFAULT_USERNAME, config.ARCHIVES_TO_SCAN)
+        except chesscom.ChessComError as exc:
+            print(f"warm start skipped: {exc}", flush=True)
+            return
+        storage.save_games(config.DEFAULT_USERNAME, games)
+        done = storage.analysed_ids([g["id"] for g in games], config.ANALYSIS_DEPTH)
+        _batch.add(config.DEFAULT_USERNAME, [g for g in games if g["id"] not in done][:config.WARM_START_GAMES])
+
+    threading.Thread(target=run, name="warm-start", daemon=True).start()
+
+
+warm_start()
+
+
 @app.post("/api/batch")
 def api_batch():
     """Queue the user's most recent un-analysed games (default 20)."""
     body = request.get_json(silent=True) or {}
     username = (body.get("username") or config.DEFAULT_USERNAME).strip()
-    count = max(1, min(100, int(body.get("count") or 20)))
+    count = max(1, min(config.BATCH_MAX, int(body.get("count") or 20)))
     if not config.find_stockfish():
         return _error("Stockfish isn't installed.", 503)
     games = storage.games_for(username)

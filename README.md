@@ -109,6 +109,17 @@ docker run -p 5050:5050 -v chess-coach-data:/data chess-coach      # add -e GEMI
 
 The image bundles Stockfish and runs the app under gunicorn. CI builds it and smoke-tests it on every push.
 
+### Public demo (Hugging Face Spaces)
+
+The hosted demo is the same image with `PUBLIC_DEMO=1`, which caps AI explanations per visitor and
+per day (cached explanations are free), caps batch analysis, and analyses the default player's
+recent games on start-up so Insights and Puzzles aren't empty. After CI passes on `main`,
+`.github/workflows/deploy.yml` builds the Space with `scripts/build_space.py` and pushes it.
+
+To deploy your own: create a Docker Space, add `GEMINI_API_KEY` as a secret in the Space's
+settings, then in this GitHub repo add a Hugging Face write token as the secret `HF_TOKEN` and
+the Space's name (`user/space`) as the variable `HF_SPACE`.
+
 ## How the coach works
 
 Language models can't calculate chess. Hand one a FEN and ask "why was this a blunder?" and it will
@@ -197,6 +208,10 @@ Copy `.env.example` to `.env`. Every setting is optional:
 | `ANALYSIS_DEPTH` | `14` | Stockfish depth (higher is stronger and slower) |
 | `STOCKFISH_PATH` | auto-detected | path to the engine |
 | `PORT` | `5050` | web server port |
+| `PUBLIC_DEMO` | `0` | public-hosting mode (limits below, trusts the proxy's client IP) |
+| `AI_PER_CLIENT_DAY` / `AI_PER_DAY` | `15` / `300` in public mode, else no cap | daily AI coach calls per visitor / in total |
+| `BATCH_MAX` | `20` in public mode, else `100` | most games one batch analysis can queue |
+| `WARM_START_GAMES` | `20` in public mode, else `0` | games of the default player analysed on start-up |
 
 ## Project layout
 

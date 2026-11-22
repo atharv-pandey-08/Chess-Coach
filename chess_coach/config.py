@@ -50,6 +50,14 @@ ARCHIVES_TO_SCAN: int = _int_env("ARCHIVES_TO_SCAN", 3)
 MAX_GAMES: int = _int_env("MAX_GAMES", 100)
 DB_PATH: Path = Path(os.environ.get("CHESS_COACH_DB", PROJECT_DIR / "chess_coach.db"))
 
+# Public demo mode (the hosted Space): rate-limits the AI coach, caps batch sizes, trusts the
+# hosting proxy's X-Forwarded-For header, and analyses the default player's games on start-up.
+PUBLIC_DEMO: bool = os.environ.get("PUBLIC_DEMO", "0") == "1"
+AI_PER_CLIENT_DAY: int = _int_env("AI_PER_CLIENT_DAY", 15 if PUBLIC_DEMO else 0)  # 0 = no cap
+AI_PER_DAY: int = _int_env("AI_PER_DAY", 300 if PUBLIC_DEMO else 0)
+BATCH_MAX: int = _int_env("BATCH_MAX", 20 if PUBLIC_DEMO else 100)
+WARM_START_GAMES: int = _int_env("WARM_START_GAMES", 20 if PUBLIC_DEMO else 0)
+
 GEMINI_API_KEY: str | None = os.environ.get("GEMINI_API_KEY") or None
 GEMINI_MODEL: str = os.environ.get("GEMINI_MODEL", "gemini-3.6-flash")
 # Tried in order when the main model is overloaded (HTTP 503/429).
