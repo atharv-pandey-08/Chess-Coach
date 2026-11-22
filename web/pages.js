@@ -52,7 +52,7 @@ function renderBatch(b, p) {
   } else {
     const left = p ? p.games - p.analysed : 0;
     el.innerHTML = left > 0 ? `<button class="btn btn-sm" id="batch-go">Analyze ${Math.min(20, left)} more games</button>
-      <div class="muted small" style="margin-top:4px">${left} not analysed yet · about 5–10 s each</div>` : "";
+      <div class="muted small" style="margin-top:4px">${left} not analysed yet · ${S.cfg?.public ? "a minute or more each on the free demo server" : "about 5–10 s each"}</div>` : "";
     const go = $("#batch-go");
     if (go) go.onclick = startBatch;
   }

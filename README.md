@@ -5,7 +5,8 @@
 ![Python](https://img.shields.io/badge/Python-3.12+-2f4a3a?style=flat-square&labelColor=121614&logo=python&logoColor=d9b45a)
 ![Flask](https://img.shields.io/badge/Flask-2f4a3a?style=flat-square&labelColor=121614)
 ![Stockfish](https://img.shields.io/badge/Stockfish-UCI-2f4a3a?style=flat-square&labelColor=121614)
-![Tests](https://img.shields.io/badge/tests-unittest-2f4a3a?style=flat-square&labelColor=121614)
+[![CI](https://img.shields.io/github/actions/workflow/status/atharv-pandey-08/Chess-Coach/ci.yml?branch=main&style=flat-square&label=CI&labelColor=121614)](https://github.com/atharv-pandey-08/Chess-Coach/actions/workflows/ci.yml)
+[![Live demo](https://img.shields.io/badge/live%20demo-Render-2f4a3a?style=flat-square&labelColor=121614)](https://chess-coach-7gd6.onrender.com)
 
 **Review your Chess.com games with Stockfish, get explanations that can't invent tactics,
 and find the patterns behind your mistakes.**
@@ -195,6 +196,9 @@ Puzzles use a simplified **SM-2** schedule (`srs.py`): solved puzzles come back 
 - **Design choices worth arguing about**: pure functions for everything derived from engine output
   (so the UI can poll a half-finished analysis); one process on purpose (jobs, batch queue and the
   coach's engine live in memory); single-threaded Stockfish for reproducible reviews.
+- **Deployed with a Blueprint**: `render.yaml` runs the Docker image on Render's free plan and every
+  push to `main` redeploys. Public mode rate-limits the AI coach per visitor, and the image ships a
+  pre-analysed starter database so a cold start doesn't wait on a 0.1-CPU Stockfish.
 
 ## Configuration
 
@@ -226,20 +230,27 @@ chess_coach/      shared core
   insights.py     mistake categories and cross-game statistics
   srs.py          spaced-repetition schedule for puzzles
   chesscom.py     Chess.com API client and PGN import
-  storage.py      SQLite cache (games, analyses, AI notes)
+  storage.py      SQLite cache (games, analyses, AI notes, puzzles)
   ai_coach.py     fact-checked LLM explanations + rule-based fallback
+  limits.py       daily AI caps for the public demo
   config.py       .env / environment settings
 server.py         Flask web app and JSON API
 web/              front-end (vanilla HTML/CSS/JS, no build step; pages.js = Insights + Puzzles)
 tests/            unit tests:  python -m unittest discover tests
+evals/            AI hallucination eval: dataset, independent board checker, results
+scripts/          benchmarks, engine-mode comparison, seed-database builder
+seed/             starter database the hosted demo boots with
+Dockerfile        app + Stockfish under gunicorn
+render.yaml       Render Blueprint for the live demo
 ```
 
 ## What I'd improve next
 
 I'd rather list the gaps than hide them.
 
-- **No public deployment yet.** It runs locally. The plan is Stockfish compiled to WebAssembly in
-  the browser, so a hosted version costs nothing to run.
+- **The live demo runs on a free 0.1-CPU server.** Games that come pre-analysed open instantly, but
+  analysing a new one takes minutes there (seconds locally). Running Stockfish in the visitor's
+  browser as WebAssembly would make the demo fast and keep hosting free.
 - **The eval set is small.** 40 positions from one player's games is enough to see the difference
   between the two designs, not to estimate small rates precisely. The "undetected tactic" figure is
   an upper bound: the detectors can miss a real tactic (in a manual read, most flagged claims were
