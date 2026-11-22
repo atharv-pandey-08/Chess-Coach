@@ -17,9 +17,11 @@ from __future__ import annotations
 import re
 import threading
 from collections import Counter, defaultdict
+from collections.abc import Sequence
 from typing import Any
 
-from . import analysis, facts as facts_mod
+from . import analysis
+from . import facts as facts_mod
 
 # Category names are shown to the user; keep them short and concrete.
 CATEGORIES = {
@@ -93,7 +95,7 @@ def opening_family(name: str) -> str:
     return " ".join(name.split()[:3])
 
 
-def extract_game(game: dict, evals: list[dict]) -> dict:
+def extract_game(game: dict, evals: Sequence[dict | None]) -> dict:
     """Everything the cross-game statistics need from one analysed game."""
     with _cache_lock:
         if game["id"] in _cache:
@@ -133,7 +135,8 @@ def extract_game(game: dict, evals: list[dict]) -> dict:
 def _puzzle(game: dict, review: dict, m: dict, f: dict, cat: str, kind: str | None) -> dict:
     ply = m["ply"]
     best = f["best"]
-    theme = kind or {"hung": "hanging_piece", "threat": "defend", "slip": "convert", "mate": "defend"}.get(cat, "best_move")
+    themes = {"hung": "hanging_piece", "threat": "defend", "slip": "convert", "mate": "defend"}
+    theme = kind or themes.get(cat, "best_move")
     return {
         "id": f"{game['id']}:{ply}",
         "game_id": game["id"], "ply": ply, "fen": review["positions"][ply - 1]["fen"],
@@ -232,7 +235,8 @@ def build_profile(all_games: list[dict], extracted: list[dict]) -> dict[str, Any
     profile = {
         "games": len(all_games), "analysed": len(extracted), "mistakes": len(mistakes),
         "accuracy": _mean([g["accuracy"] for g in extracted]),
-        "blunders_per_game": round(sum(1 for x in mistakes if x["cls"] == "Blunder") / len(extracted), 2) if extracted else None,
+        "blunders_per_game": (round(sum(1 for x in mistakes if x["cls"] == "Blunder") / len(extracted), 2)
+                              if extracted else None),
         "categories": categories, "time": time_rows, "speed": speed_rows, "phases": phases, "colors": colors,
         "openings": openings[:12], "trend": trend, **_score(all_games),
     }
@@ -243,8 +247,8 @@ def build_profile(all_games: list[dict], extracted: list[dict]) -> dict[str, Any
 def _score(games: list[dict]) -> dict:
     w = sum(g["result"] == "Win" for g in games)
     d = sum(g["result"] == "Draw" for g in games)
-    l = len(games) - w - d
-    return {"wins": w, "draws": d, "losses": l, "score": _rate(w + 0.5 * d, len(games))}
+    losses = len(games) - w - d
+    return {"wins": w, "draws": d, "losses": losses, "score": _rate(w + 0.5 * d, len(games))}
 
 
 def headlines(p: dict) -> list[str]:

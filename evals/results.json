@@ -1,0 +1,1448 @@
+{
+ "positions": 40,
+ "table": [
+  {
+   "system": "Baseline (FEN prompt)",
+   "n": 40,
+   "hallucination_rate": 2.5,
+   "unverified_tactic_rate": 22.5,
+   "names_key_move_rate": 35.0
+  },
+  {
+   "system": "Grounded, first draft",
+   "n": 39,
+   "hallucination_rate": 2.6,
+   "unverified_tactic_rate": 0.0,
+   "names_key_move_rate": 100.0
+  },
+  {
+   "system": "Grounded, shown to user",
+   "n": 40,
+   "hallucination_rate": 0.0,
+   "unverified_tactic_rate": 0.0,
+   "names_key_move_rate": 100.0
+  }
+ ],
+ "grounded_ai_answers": 39,
+ "grounded_needed_retry": 1,
+ "grounded_fell_back_to_rules": 1,
+ "rows": [
+  {
+   "id": "187516827614:26",
+   "category": "hung",
+   "baseline": {
+    "text": "By trading your strong dark-squared bishop for a knight, you voluntarily give up your greatest asset and allow White to solidify their position by recapturing with the b-pawn. You missed the opportunity to keep your bishop as a long-term attacker, which would have forced White to deal with persistent pressure on their queenside structure. A key takeaway is to avoid trading your active pieces for passive ones unless it secures a clear tactical advantage or solves a specific problem.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": false
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move leaves your opponent's bishop undefended. By playing Bxc3, your opponent moved their bishop to a square where it is now undefended. You can now capture it with Qxc3. Your opponent missed that their bishop on c3 is now hanging to your queen. Bf6 was a better choice for your opponent to keep their advantage. It would have kept their piece safe and maintained their pressure. Always check if a piece you move is left undefended and can be captured for free.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move leaves your opponent's bishop undefended. By playing Bxc3, your opponent moved their bishop to a square where it is now undefended. You can now capture it with Qxc3. Your opponent missed that their bishop on c3 is now hanging to your queen. Bf6 was a better choice for your opponent to keep their advantage. It would have kept their piece safe and maintained their pressure. Always check if a piece you move is left undefended and can be captured for free.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187278968490:23",
+   "category": "king",
+   "baseline": {
+    "text": "By castling, you allow Black to trade their well-placed knight for your strong bishop on f3, which permanently damages your kingside pawn structure and leaves your king vulnerable. You missed that maintaining the bishop pair or challenging the center immediately was crucial to keeping the position playable. Remember that in semi-open positions, preserving your light-squared bishop is often more valuable than rushing to get your king to safety.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": false
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 3,
+    "first_draft": {
+     "text": "This move allows your opponent to win a free pawn. By playing O-O, you left your pawn on e5 undefended. Your opponent can now play Nxe5 to capture it for free. You missed that your opponent was threatening to capture your knight on f3 with Nxf3+. Playing Bg2 would have been better because it defends your position and prepares to develop your pieces safely. Always check which of your pawns are undefended before you decide on your move.",
+     "illegal_moves": [],
+     "wrong_pieces": [
+      "knight on f3"
+     ],
+     "unverified_tactics": [],
+     "hallucinated": true,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move leaves your pawn on e5 undefended. You played O-O, which ignores the threat of your opponent capturing your piece on f3. This move leaves your pawn on e5 undefended, allowing your opponent to capture it for free. You overlooked that your opponent was threatening to capture on f3. Playing Bg2 would have been better. It helps defend your position and prepares to develop your pieces safely. Always check if your opponent has any immediate threats before you decide to castle.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187500708138:22",
+   "category": "mate",
+   "baseline": {
+    "text": "Your opponent\u2019s move is a catastrophic blunder because it ignores the immediate threat of your queen delivering checkmate on f7. By moving the knight to b4, Black failed to defend that weak square, allowing you to end the game instantly. Always prioritize checking for undefended pieces and potential back-rank or weak-square mating patterns before considering an attacking move of your own.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [
+     "back_rank_mate"
+    ],
+    "hallucinated": false,
+    "names_key_move": false
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move allows a forced checkmate. By playing Nb4, your opponent ignored your threat to capture the knight on d5 and left their pawn on f7 undefended. This blunder allows you to deliver checkmate immediately. You already had a winning threat with Bxd5, which would have captured a free knight and set up a mate threat. Your opponent should have played c6 to challenge your pieces and defend their position. This would have kept the game equal instead of losing instantly. Always check if your opponent has any immediate threats before moving your pieces.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move allows a forced checkmate. By playing Nb4, your opponent ignored your threat to capture the knight on d5 and left their pawn on f7 undefended. This blunder allows you to deliver checkmate immediately. You already had a winning threat with Bxd5, which would have captured a free knight and set up a mate threat. Your opponent should have played c6 to challenge your pieces and defend their position. This would have kept the game equal instead of losing instantly. Always check if your opponent has any immediate threats before moving your pieces.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187311591234:26",
+   "category": "material",
+   "baseline": {
+    "text": "By castling queenside, your opponent moved their king directly into a dangerous firing line where White\u2019s pieces are already well-positioned to launch an attack. They missed the importance of using their queenside pawns to challenge your space first, effectively gifting you the initiative. Always evaluate your king's safety against your opponent's active pieces before castling, especially if the center remains semi-open and your king would be heading toward a potential storm.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": false
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move leaves your pawn on f7 undefended. By playing O-O-O, your opponent moved their king to safety but left the pawn on f7 completely undefended. You can now play Bxf7 to capture that pawn for free. You missed the opportunity to capture the undefended pawn on f7 immediately. Playing a5 would have been a better choice to keep the position balanced. It helps control the board without leaving your pieces or pawns vulnerable to capture. Always check if your opponent has left any pawns or pieces undefended before you make your move.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move leaves your pawn on f7 undefended. By playing O-O-O, your opponent moved their king to safety but left the pawn on f7 completely undefended. You can now play Bxf7 to capture that pawn for free. You missed the opportunity to capture the undefended pawn on f7 immediately. Playing a5 would have been a better choice to keep the position balanced. It helps control the board without leaving your pieces or pawns vulnerable to capture. Always check if your opponent has left any pawns or pieces undefended before you make your move.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187369230502:44",
+   "category": "missed",
+   "baseline": {
+    "text": "By playing g6, Black misses the devastating tactical shot Re2, which forces a trade that completely dismantles White\u2019s defense and unravels your position. This passive move allows White to stabilize and regain equality, whereas the engine's recommendation would have exploited the pin on the d2-pawn to gain a decisive material or positional advantage. Always look for forcing moves like checks, captures, or threats before opting for a quiet developing move.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [
+     "pin"
+    ],
+    "hallucinated": false,
+    "names_key_move": true
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move misses a winning mate threat. By playing g6, your opponent stops your bishop on b2 from attacking the pawn on g7. However, this move ignores the immediate danger posed by your position. Your opponent missed that Re2 creates a mate threat with Qxf3#. Re2 was the best move because it forces a sequence where your opponent wins a piece. It creates a direct threat that you would have been forced to address. Always look for your opponent's threats before deciding on your own move.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move misses a winning mate threat. By playing g6, your opponent stops your bishop on b2 from attacking the pawn on g7. However, this move ignores the immediate danger posed by your position. Your opponent missed that Re2 creates a mate threat with Qxf3#. Re2 was the best move because it forces a sequence where your opponent wins a piece. It creates a direct threat that you would have been forced to address. Always look for your opponent's threats before deciding on your own move.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187569696892:13",
+   "category": "positional",
+   "baseline": {
+    "text": "Your opponent captured with the bishop instead of the knight, missing a key opportunity to dominate the center. Recapturing with the knight first forces Black to trade off their active bishop, leaving White with a powerful dark-squared bishop control and a completely solid center. By playing the bishop move instead, White gives up their active piece for free and leaves their central e4-pawn vulnerable to easy pressure. As a key rule, always look to recapture with the piece that leaves your remaining forces on their most active, harmonious squares.",
+    "model": "gemini-3.6-flash",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": false
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move gives up your opponent's advantage. Your opponent played Bxd4 to capture your piece, but this allows you to recapture with Nxd4. By doing this, your opponent missed a chance to win a pawn. Your opponent missed that playing Nxd4 would have allowed them to win a pawn after the subsequent exchanges. Your opponent should have played Nxd4 instead. This would have forced you to trade pieces and left your opponent with an extra pawn. Always look for ways to win material before trading your pieces.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move gives up your opponent's advantage. Your opponent played Bxd4 to capture your piece, but this allows you to recapture with Nxd4. By doing this, your opponent missed a chance to win a pawn. Your opponent missed that playing Nxd4 would have allowed them to win a pawn after the subsequent exchanges. Your opponent should have played Nxd4 instead. This would have forced you to trade pieces and left your opponent with an extra pawn. Always look for ways to win material before trading your pieces.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187369230502:54",
+   "category": "slip",
+   "baseline": {
+    "text": "By playing Re8, you missed the chance to immediately finish the game by pushing your f-pawn to restrict the white king and coordinate your pieces for a decisive attack. Bringing the rook to the e-file is unnecessary because your main threat comes from the crushing pressure your pawns are exerting on the center and kingside. Remember that when your opponent is cramped, prioritize advancing your attacking pawns to open lines rather than moving pieces that are already well-placed.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": false
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move gives away a free pawn. By playing Re8, your opponent leaves the pawn on d2 undefended. You can now capture it with Qxd2 to win material. You missed that your opponent left the pawn on d2 unprotected. Your opponent should have played f5 to maintain their advantage and control the center. This move would have kept their position strong. Always look for undefended pieces or pawns that you can capture for free.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move gives away a free pawn. By playing Re8, your opponent leaves the pawn on d2 undefended. You can now capture it with Qxd2 to win material. You missed that your opponent left the pawn on d2 unprotected. Your opponent should have played f5 to maintain their advantage and control the center. This move would have kept their position strong. Always look for undefended pieces or pawns that you can capture for free.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187501197964:23",
+   "category": "tactic",
+   "baseline": {
+    "text": "By moving your knight to e2, you allowed your opponent to play ...Nxc3, which forces an exchange that severely damages your pawn structure and opens the center. You missed the simple retreat Be2, which would have safely developed your bishop while maintaining control over the board. Remember that before moving a piece, always check if your opponent can respond with a capture that ruins your coordination or leaves you with doubled, isolated pawns.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": true
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move allows your queen to fork multiple pieces. By playing Ne2, your opponent leaves the b2 pawn undefended. This allows you to play Qxb2, which forks the rook on a1, the knight on c3, and the pawn on c2. You missed the opportunity to capture the undefended pawn on b2 and create a fork. Your opponent should have played Be2 to develop their piece and keep their position safe. This would have kept them in a winning position. Always look for undefended pawns or pieces that you can attack with a fork.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move allows your queen to fork multiple pieces. By playing Ne2, your opponent leaves the b2 pawn undefended. This allows you to play Qxb2, which forks the rook on a1, the knight on c3, and the pawn on c2. You missed the opportunity to capture the undefended pawn on b2 and create a fork. Your opponent should have played Be2 to develop their piece and keep their position safe. This would have kept them in a winning position. Always look for undefended pawns or pieces that you can attack with a fork.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187425853036:8",
+   "category": "threat",
+   "baseline": {
+    "text": "By playing Bg4, you are trying to pin the knight to the queen, but you have left your queen completely undefended in the center of the board. White can simply play f3 to kick your bishop away and then trap or exchange your queen, resulting in a crushing material advantage. Always check that your queen is safe and well-protected before starting aggressive maneuvers with your minor pieces.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [
+     "pin",
+     "trapped_piece"
+    ],
+    "hallucinated": false,
+    "names_key_move": false
+   },
+   "grounded": {
+    "source": "engine",
+    "model": null,
+    "attempts": 1,
+    "first_draft": null,
+    "final": {
+     "text": "This ignores the opponent's threat. It ignores a threat. You threatened Nxd5: Nxd5 wins material (about 6 pawns). After 5. Qxg4 Qd7 6. Qxd7+ Nbxd7 7. Nf3 O-O-O, the opponent loses a piece.  Qd6 was better. 4... Qd6 5. Nf3 g6 6. Bg5 a6 7. Qd2 keeps the position about equal. Look for captures first: checks, captures and threats, in that order.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": "504 DEADLINE_EXCEEDED. {'error': {'code': 504, 'message': 'Deadline expired before operation could complete.', 'status': 'DEADLINE_EXCEEDED'}}"
+   }
+  },
+  {
+   "id": "187432770912:74",
+   "category": "hung",
+   "baseline": {
+    "text": "By playing Qb3, you allowed White to trade queens and remove your most active piece, which also protected your vulnerable king and pawns. Instead, Qb1+ forces the king into a disadvantageous spot and creates immediate threats by picking up the c2-pawn with check. Always prioritize forcing moves like checks and captures that disrupt your opponent's coordination before retreating or forcing an endgame transition.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": true
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move hangs your queen for free. By moving your queen to b3, you left it undefended. Your opponent can now play cxb3 to capture your queen. You missed that the pawn on c2 can capture your queen on b3. You should have played Qb1+. This move uses a skewer to attack the king on d1 and the rook on f1, which would have allowed you to win more material. Always check if your piece is undefended before moving it to a new square.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move hangs your queen for free. By moving your queen to b3, you left it undefended. Your opponent can now play cxb3 to capture your queen. You missed that the pawn on c2 can capture your queen on b3. You should have played Qb1+. This move uses a skewer to attack the king on d1 and the rook on f1, which would have allowed you to win more material. Always check if your piece is undefended before moving it to a new square.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187559350558:35",
+   "category": "king",
+   "baseline": {
+    "text": "By moving your knight to e2, you unblocked the f-file and allowed Black\u2019s queen to capture your f4-pawn with a devastating attack on your king. You essentially invited Black to create a powerful passed pawn and rip open your defenses, turning a manageable disadvantage into a lost position. Always check if a piece move inadvertently exposes your own king or undefended pawns to immediate tactical strikes before committing.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": false
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.6-flash",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This allows Qxe3+, which wins a free bishop. You played Ne2 to stop your opponent's threat of Qxg3, which would win a free knight. However, this allowed your opponent to play Qxe3+, winning a free bishop. You missed that moving the knight allowed your opponent to play Qxe3+ with check. A better move was Qe1. This keeps your position only slightly worse while defending against the threat. Before moving a piece to defend, check if it leaves another piece undefended.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This allows Qxe3+, which wins a free bishop. You played Ne2 to stop your opponent's threat of Qxg3, which would win a free knight. However, this allowed your opponent to play Qxe3+, winning a free bishop. You missed that moving the knight allowed your opponent to play Qxe3+ with check. A better move was Qe1. This keeps your position only slightly worse while defending against the threat. Before moving a piece to defend, check if it leaves another piece undefended.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187278453814:75",
+   "category": "mate",
+   "baseline": {
+    "text": "By moving your king to f3, you accidentally unblocked the diagonal for Black's queen, allowing her to deliver a checkmate on the very next move. You overlooked that your king was essentially performing a defensive duty by shielding your position; when it stepped away, the threat from the black queen became unstoppable. Always pause before moving your king to check if it is actively pinning or blocking a critical path that could lead to an immediate disaster.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [
+     "pin"
+    ],
+    "hallucinated": false,
+    "names_key_move": false
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move allows a forced checkmate. By playing Kf3, you moved your king into a position where your opponent can deliver checkmate. Your opponent responds with Rg3#, which ends the game immediately. You overlooked that your king had no safe squares and that Rg3# was a direct threat. Playing Bg2 would have kept the game going and maintained an equal position. It provides a defensive barrier for your king. Always check for immediate checkmate threats against your king before moving it.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move allows a forced checkmate. By playing Kf3, you moved your king into a position where your opponent can deliver checkmate. Your opponent responds with Rg3#, which ends the game immediately. You overlooked that your king had no safe squares and that Rg3# was a direct threat. Playing Bg2 would have kept the game going and maintained an equal position. It provides a defensive barrier for your king. Always check for immediate checkmate threats against your king before moving it.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187569696892:22",
+   "category": "material",
+   "baseline": {
+    "text": "By playing d6, you block your own dark-squared bishop's access to the center and invite White to gain massive space and pressure with the advance e5. You missed the opportunity to challenge the queen with Qc7, which forces an immediate exchange or repositioning that keeps the game balanced. Remember that in the opening, you should prioritize active piece development over passive pawn moves that restrict your own bishops.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": true
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move leaves your pawn on d6 undefended. You played d6 to block the threat of e5, but you left the pawn on d6 undefended. Your opponent can now capture it with Qxd6. You missed that your opponent can simply take your pawn for free. Playing Qc7 is a better choice because it defends your position without giving away a pawn. This keeps the material level and maintains your defensive setup. Always check if your move leaves a piece or pawn undefended before you play it.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move leaves your pawn on d6 undefended. You played d6 to block the threat of e5, but you left the pawn on d6 undefended. Your opponent can now capture it with Qxd6. You missed that your opponent can simply take your pawn for free. Playing Qc7 is a better choice because it defends your position without giving away a pawn. This keeps the material level and maintains your defensive setup. Always check if your move leaves a piece or pawn undefended before you play it.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187503611828:27",
+   "category": "missed",
+   "baseline": {
+    "text": "By playing b4, you carelessly allowed Black to respond with ...Bxb4, effectively removing your central pawn and opening the b-file against your king. You missed that your light-squared bishop on g2 was left undefended, allowing Black to capture it after your sequence of moves instead of keeping the pressure on their position. Always check if your pieces are still protected after you move a pawn that supports or shields them.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [
+     "Bxb4"
+    ],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": true,
+    "names_key_move": false
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move ignores your opponent's threat to castle. You played b4, but you failed to address the fact that your opponent was threatening to play O-O-O. By ignoring this, you allowed your opponent to improve their position safely. You missed the threat of O-O-O. Playing Ne1 is much stronger because it creates a discovered attack where your bishop on g2 targets your opponent's queen on d5. This move puts you in a position to win a significant amount of material. Always check what your opponent is threatening before you make your own move.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move ignores your opponent's threat to castle. You played b4, but you failed to address the fact that your opponent was threatening to play O-O-O. By ignoring this, you allowed your opponent to improve their position safely. You missed the threat of O-O-O. Playing Ne1 is much stronger because it creates a discovered attack where your bishop on g2 targets your opponent's queen on d5. This move puts you in a position to win a significant amount of material. Always check what your opponent is threatening before you make your own move.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187278453814:57",
+   "category": "positional",
+   "baseline": {
+    "text": "By playing Bc3, you've blocked the activity of your own rook and allowed Black to gain counterplay by targeting your loosened kingside and center. The engine preferred Bb2 to keep your pieces harmoniously coordinated and ready to support a central push. Always prioritize moves that maintain the mobility of your pieces rather than those that passively crowd your own position.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": true
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move lets your opponent equalize the game. Your opponent played Bc3 to defend against your threat of Rxe5, which would have captured their bishop for free. By moving the bishop to this square, they gave up their slight advantage. They missed that Bb2 would have allowed them to capture your pawn on a4 while keeping their advantage. The move Bb2 was better because it keeps the bishop safe while preparing to capture your pawn on a4. Always look for ways to defend your pieces while simultaneously attacking your opponent's undefended pawns.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move lets your opponent equalize the game. Your opponent played Bc3 to defend against your threat of Rxe5, which would have captured their bishop for free. By moving the bishop to this square, they gave up their slight advantage. They missed that Bb2 would have allowed them to capture your pawn on a4 while keeping their advantage. The move Bb2 was better because it keeps the bishop safe while preparing to capture your pawn on a4. Always look for ways to defend your pieces while simultaneously attacking your opponent's undefended pawns.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187278968490:42",
+   "category": "slip",
+   "baseline": {
+    "text": "By moving your bishop to g3, you\u2019ve voluntarily traded off your active piece for White's knight, which actually improves their structure and opens the h-file for their rook. You missed the opportunity to keep your bishop on the strong c5-square, where it eyes the center and maintains constant pressure on White's position. Remember that it is usually a mistake to trade your best-placed minor piece for a passive or restricted opponent's piece without a concrete tactical reason.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": false
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "Your opponent blundered by moving the bishop to g3. Your opponent played Bg3 to stop your threat of Rxf2, which would have captured their bishop for free. By moving the bishop away, they gave up their strong attacking position. Your opponent missed that Bc5 would have kept their position clearly better. Your opponent should have played Bc5 to maintain their advantage. This move keeps their pieces active and continues to pressure your position. Always look for ways to keep your pieces active while defending against your opponent's threats.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "Your opponent blundered by moving the bishop to g3. Your opponent played Bg3 to stop your threat of Rxf2, which would have captured their bishop for free. By moving the bishop away, they gave up their strong attacking position. Your opponent missed that Bc5 would have kept their position clearly better. Your opponent should have played Bc5 to maintain their advantage. This move keeps their pieces active and continues to pressure your position. Always look for ways to keep your pieces active while defending against your opponent's threats.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187275350454:26",
+   "category": "tactic",
+   "baseline": {
+    "text": "By trading your bishop for the knight, you allowed White's king to escape a dangerous pin and gave them the time to consolidate their position. You missed the opportunity to put immediate pressure on the white queen, which would have forced them into a much more difficult defensive situation. Always look for forcing tactical sequences that improve your position before settling for a simple trade that relieves your opponent's pressure.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": false
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move allows a devastating fork. You captured the bishop on g2, but this leaves your king vulnerable. Your opponent can now play Qg4+, which forks your king and your bishop. You missed that your opponent can use their queen to attack your king and bishop at the same time. You should have played Rxd1 instead. This move wins material by pinning the rook on e1 to your opponent's king. Always check if your move leaves your king exposed to a fork before you capture a piece.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move allows a devastating fork. You captured the bishop on g2, but this leaves your king vulnerable. Your opponent can now play Qg4+, which forks your king and your bishop. You missed that your opponent can use their queen to attack your king and bishop at the same time. You should have played Rxd1 instead. This move wins material by pinning the rook on e1 to your opponent's king. Always check if your move leaves your king exposed to a fork before you capture a piece.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187236673872:43",
+   "category": "threat",
+   "baseline": {
+    "text": "By playing Be3, you walk directly into the pin created by the black rook on the f-file, allowing Black to capture your bishop with the rook while simultaneously setting up a discovered attack. You essentially lose a full piece for nothing, turning a balanced position into a losing one because you ignored the dangerous alignment of your pieces. Always prioritize checking for hanging pieces or tactical pins before moving a piece to a square where it can be immediately captured for free.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [
+     "discovered_attack",
+     "pin"
+    ],
+    "hallucinated": false,
+    "names_key_move": false
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move leaves your knight on f7 undefended. By playing Be3, your opponent ignored your threat to capture their knight on f7. This allows you to play Kxf7 and win a free piece. You already had a threat to play Rxf7 and win a free knight. Your opponent should have played Bg5 to defend their position and keep the game equal. Always check if your opponent has any pieces left undefended before you make your move.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move leaves your knight on f7 undefended. By playing Be3, your opponent ignored your threat to capture their knight on f7. This allows you to play Kxf7 and win a free piece. You already had a threat to play Rxf7 and win a free knight. Your opponent should have played Bg5 to defend their position and keep the game equal. Always check if your opponent has any pieces left undefended before you make your move.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187278453814:48",
+   "category": "hung",
+   "baseline": {
+    "text": "By capturing the pawn with the bishop, you allowed White's pieces to become coordinated and created an opportunity for them to challenge your control of the center. You missed the chance to maintain your crushing pressure by simply activating your rook on the open file, which would have kept White\u2019s king pinned in a difficult defensive position. Always prioritize developing your inactive pieces and improving your overall coordination before rushing to snatch material.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [
+     "pin"
+    ],
+    "hallucinated": false,
+    "names_key_move": false
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move ignores a threat to your rook. You captured a pawn with Bxg4, but you left your rook on a8 undefended. This allows your opponent to play Bxa8 and win your rook for free. You overlooked that your opponent was threatening to capture your rook on a8. Playing Rb8 protects your rook and keeps your advantage. This move keeps your pieces safe while maintaining your material lead. Always check if your opponent has a threat against your pieces before you make your own capture.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move ignores a threat to your rook. You captured a pawn with Bxg4, but you left your rook on a8 undefended. This allows your opponent to play Bxa8 and win your rook for free. You overlooked that your opponent was threatening to capture your rook on a8. Playing Rb8 protects your rook and keeps your advantage. This move keeps your pieces safe while maintaining your material lead. Always check if your opponent has a threat against your pieces before you make your own capture.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187532122644:76",
+   "category": "king",
+   "baseline": {
+    "text": "By playing Kh7, you surrendered your most active piece by moving the king away from the action instead of utilizing your queen to force progress. The move Qd6+ was superior because it keeps the pressure on the white king and forces concessions, whereas your choice allows White time to reorganize and stabilize their defense. Remember the principle that in an endgame, checking moves often force your opponent into awkward positions that restrict their defensive options.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": true
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move lets your opponent back into the game. By playing Kh7, your opponent moved their king away from an active position. This allows you to start checking their king and creates chances for you to improve your standing. Your opponent missed the chance to keep their strong advantage by playing Qd6+ to keep attacking your king. Your opponent should have played Qd6+ to keep the pressure on you. This move would have kept them clearly better by forcing your king to move. Always look for ways to keep your pieces active and attacking rather than moving your king unnecessarily.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move lets your opponent back into the game. By playing Kh7, your opponent moved their king away from an active position. This allows you to start checking their king and creates chances for you to improve your standing. Your opponent missed the chance to keep their strong advantage by playing Qd6+ to keep attacking your king. Your opponent should have played Qd6+ to keep the pressure on you. This move would have kept them clearly better by forcing your king to move. Always look for ways to keep your pieces active and attacking rather than moving your king unnecessarily.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187236673872:78",
+   "category": "mate",
+   "baseline": {
+    "text": "By playing Ne3, you allow White to deliver a forced checkmate starting with Rh7#, as your knight move unblocks the rank and removes a key defender. You missed that your king was already in a mating net, and failing to use your rook to check the white king gave your opponent the winning tempo. Always prioritize checking the king or creating space for your own king when you are under a direct mating threat.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": true
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move allows your opponent to deliver checkmate. You moved your knight to e3, but you ignored the threat from your opponent. By playing Ne3, you allowed your opponent to play Rh7# which results in immediate checkmate. You missed that your opponent was threatening to play Rh7+. You should have played Rc4+ to give a check and remove your rook from danger. This would have kept you in a winning position. Always check for your opponent's threats before you make your own move.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move allows your opponent to deliver checkmate. You moved your knight to e3, but you ignored the threat from your opponent. By playing Ne3, you allowed your opponent to play Rh7# which results in immediate checkmate. You missed that your opponent was threatening to play Rh7+. You should have played Rc4+ to give a check and remove your rook from danger. This would have kept you in a winning position. Always check for your opponent's threats before you make your own move.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187278968490:44",
+   "category": "material",
+   "baseline": {
+    "text": "By playing Qd6, Black ignores the immediate threat of your pawn push on the queenside and leaves their position vulnerable to tactical pressure. You now have the opportunity to capitalize on their lack of king safety and activity, whereas castling would have secured their king and kept their defensive structure intact. Always prioritize your king's safety and development before venturing out with your queen in the middlegame.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": false
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move allows your opponent to win a free bishop. By playing Qd6, your opponent moved their queen away from protecting the bishop on g3. This allows you to play Nxg3 to capture that piece for free. Your opponent failed to notice that the bishop on g3 was left undefended. Your opponent should have played O-O to keep their king safe and maintain their advantage. This move keeps their pieces coordinated and avoids giving away material. Always check if your move leaves any of your pieces undefended before you play it.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move allows your opponent to win a free bishop. By playing Qd6, your opponent moved their queen away from protecting the bishop on g3. This allows you to play Nxg3 to capture that piece for free. Your opponent failed to notice that the bishop on g3 was left undefended. Your opponent should have played O-O to keep their king safe and maintain their advantage. This move keeps their pieces coordinated and avoids giving away material. Always check if your move leaves any of your pieces undefended before you play it.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187302218678:27",
+   "category": "missed",
+   "baseline": {
+    "text": "By playing b4, you push a pawn on the queenside while ignoring a tactical opportunity to solidify your position in the center. Your move allows Black to create counterplay by challenging your control over the center, whereas Qe2 would have strengthened your setup and maintained your strong initiative. Remember that when you have a significant advantage, it is usually better to improve your most central pieces rather than making peripheral pawn pushes that don't address your opponent's threats.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": true
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move allows your opponent to win a free pawn. You played b4, which ignores that your pawn on f5 is undefended. Your opponent can now play Qxf5 to capture that pawn for free. You missed that your pawn on f5 was left undefended and vulnerable to capture. Playing Qe2 is better because it pins the bishop on e7 to the king. This move also threatens to trap the bishop and creates a mate threat. Always check which of your pieces or pawns are left undefended before you make your move.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move allows your opponent to win a free pawn. You played b4, which ignores that your pawn on f5 is undefended. Your opponent can now play Qxf5 to capture that pawn for free. You missed that your pawn on f5 was left undefended and vulnerable to capture. Playing Qe2 is better because it pins the bishop on e7 to the king. This move also threatens to trap the bishop and creates a mate threat. Always check which of your pieces or pawns are left undefended before you make your move.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187237421672:11",
+   "category": "positional",
+   "baseline": {
+    "text": "By capturing with the g-pawn, you severely damaged your kingside structure and created permanent weaknesses that Black can easily exploit. The engine prefers Nxf3 because it keeps your pawn structure intact while developing a piece toward the center. Remember the principle that in the opening, you should generally aim to capture toward the center with pieces rather than breaking up your own protective pawn shield.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": true
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move damages your pawn structure unnecessarily. You played gxf3 to capture the piece and stop the threat of f2+ from your opponent. While this removes the immediate threat, it leaves your king side pawns doubled and weak. You missed that you could have captured the piece with your knight instead. Playing Nxf3 is better because it develops your knight to a strong square and keeps your pawn structure intact. This would have allowed you to win a pawn later. Always look for ways to capture with a piece instead of a pawn to keep your structure solid.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move damages your pawn structure unnecessarily. You played gxf3 to capture the piece and stop the threat of f2+ from your opponent. While this removes the immediate threat, it leaves your king side pawns doubled and weak. You missed that you could have captured the piece with your knight instead. Playing Nxf3 is better because it develops your knight to a strong square and keeps your pawn structure intact. This would have allowed you to win a pawn later. Always look for ways to capture with a piece instead of a pawn to keep your structure solid.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187369230502:23",
+   "category": "slip",
+   "baseline": {
+    "text": "By taking the pawn, you opened the e-file and allowed Black to pin your knight to your king with Re8, which you cannot easily defend. You missed that your king is still stuck in the center, making it a prime target for Black's active rooks and bishops once the file is opened. Always prioritize completing your development and castling before snatching central pawns that leave your king vulnerable to direct attacks.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [
+     "pin"
+    ],
+    "hallucinated": false,
+    "names_key_move": false
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move ignores a dangerous threat from your opponent. You played Nxe5 to capture a free pawn. By doing this, you failed to address the threat of Re8 from your opponent. You overlooked that your opponent was threatening to play Re8. Playing d4 is a better choice. It challenges the center and prepares to deal with the threat of Re8 while keeping your position strong. Always check for your opponent's threats before you decide to capture a piece.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move ignores a dangerous threat from your opponent. You played Nxe5 to capture a free pawn. By doing this, you failed to address the threat of Re8 from your opponent. You overlooked that your opponent was threatening to play Re8. Playing d4 is a better choice. It challenges the center and prepares to deal with the threat of Re8 while keeping your position strong. Always check for your opponent's threats before you decide to capture a piece.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187299828854:14",
+   "category": "tactic",
+   "baseline": {
+    "text": "By moving your queen to c6, you have allowed White to immediately trap it with the devastating move d5, which attacks the queen while opening lines for White\u2019s pieces. You completely missed that your queen was already precariously placed and had no safe squares to retreat to once that pawn advanced. Remember the principle that you should never place your queen on a square where it can be easily harassed by a pawn, as losing time or material to such \"pawn storms\" is a quick way to lose the game.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": false
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move traps your opponent's queen. Your opponent played Qc6, which allows you to play Bb5. This move traps the queen on c6 because every square it can move to results in its loss. Your opponent missed that Bb5 pins the queen on c6 to their king. Your opponent should have played Qg4 to keep the game closer to level. This would have avoided the immediate loss of their queen. Always check if your queen has a safe square to retreat to before moving it.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move traps your opponent's queen. Your opponent played Qc6, which allows you to play Bb5. This move traps the queen on c6 because every square it can move to results in its loss. Your opponent missed that Bb5 pins the queen on c6 to their king. Your opponent should have played Qg4 to keep the game closer to level. This would have avoided the immediate loss of their queen. Always check if your queen has a safe square to retreat to before moving it.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187569224340:24",
+   "category": "threat",
+   "baseline": {
+    "text": "By castling, you ignored the fact that White's knight on h4 is completely undefended and under attack by your queen. Taking the knight immediately wins a full piece and gives you a significant advantage, whereas your move allows White to stabilize their position. Always scan for undefended enemy pieces before committing to a development move like castling.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": false
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move ignores a threat to your knight. You played O-O, but you left your knight on e4 undefended. Your opponent was threatening to play g3, which attacks your knight. You missed the chance to capture the knight on h4. You should have played Qxh4. This move captures a free piece and improves your position. Always check if your opponent is threatening to capture one of your pieces before you move.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move ignores a threat to your knight. You played O-O, but you left your knight on e4 undefended. Your opponent was threatening to play g3, which attacks your knight. You missed the chance to capture the knight on h4. You should have played Qxh4. This move captures a free piece and improves your position. Always check if your opponent is threatening to capture one of your pieces before you move.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187283951052:28",
+   "category": "hung",
+   "baseline": {
+    "text": "By taking the bishop, you allowed White to play Qxa8, trading your active rook for a minor piece while simultaneously attacking your other rook. You essentially gave up your best piece for free, turning a dominant position into one where White is now fighting for the advantage. Always verify if your capturing move leaves your own pieces vulnerable to a counter-attack or a \"zwischenzug\" (in-between move) before committing.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": true
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move allows your opponent to capture your rook. You captured a bishop with Rxc4, but you left your rook on a8 undefended. Your opponent can now play Qxa8 to win that piece for free. You missed that your rook on a8 was left hanging after your move. Playing d5 is a better choice. It keeps your pieces safe and maintains your advantage. Always check if your move leaves any of your own pieces undefended before you play it.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move allows your opponent to capture your rook. You captured a bishop with Rxc4, but you left your rook on a8 undefended. Your opponent can now play Qxa8 to win that piece for free. You missed that your rook on a8 was left hanging after your move. Playing d5 is a better choice. It keeps your pieces safe and maintains your advantage. Always check if your move leaves any of your own pieces undefended before you play it.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187302054638:12",
+   "category": "king",
+   "baseline": {
+    "text": "By playing f6, you kick the knight away but create significant weaknesses around your king that White can immediately exploit by retreating the piece. You missed the opportunity to prioritize your king's safety with castling, allowing White to regain the initiative and stabilize their position. Remember the opening principle to prioritize developing your minor pieces and castling your king before pushing pawns in front of your own castled position.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": false
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move ignores a dangerous knight fork. By playing f6, you failed to address the threat of Nxf7. This move allows your opponent to fork your queen on d8, your rook on h8, and your knight on h6. You missed that your opponent was threatening to jump their knight to f7 to attack multiple pieces at once. Playing O-O is much safer because it gets your king to safety and avoids the fork. This keeps your position slightly better. Always check for your opponent's threats before making your own move.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move ignores a dangerous knight fork. By playing f6, you failed to address the threat of Nxf7. This move allows your opponent to fork your queen on d8, your rook on h8, and your knight on h6. You missed that your opponent was threatening to jump their knight to f7 to attack multiple pieces at once. Playing O-O is much safer because it gets your king to safety and avoids the fork. This keeps your position slightly better. Always check for your opponent's threats before making your own move.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187236673872:82",
+   "category": "mate",
+   "baseline": {
+    "text": "By playing Nd6, you missed that your king is trapped and White has a forced checkmate starting with Rh7#. Your knight move failed to address the immediate threat of your king being cut off, allowing White to deliver a swift finish. Always prioritize the safety of your king and check for immediate, direct threats from your opponent before deciding on your own maneuvering moves.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [
+     "trapped_piece"
+    ],
+    "hallucinated": false,
+    "names_key_move": true
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move allows a forced checkmate. You played Nd6, which ignores the threat of Rh7#. Because you did not defend against this threat, your opponent played Rh7# and delivered checkmate. You missed that your opponent was threatening to deliver checkmate with Rh7+. You should have played Rc4+. This move gives a check to your opponent and forces them to move their king, which keeps you in a winning position. Always check for your opponent's threats before you make your own move.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move allows a forced checkmate. You played Nd6, which ignores the threat of Rh7#. Because you did not defend against this threat, your opponent played Rh7# and delivered checkmate. You missed that your opponent was threatening to deliver checkmate with Rh7+. You should have played Rc4+. This move gives a check to your opponent and forces them to move their king, which keeps you in a winning position. Always check for your opponent's threats before you make your own move.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187275478128:20",
+   "category": "material",
+   "baseline": {
+    "text": "By playing f5, you have severely weakened your king's safety and opened up diagonal paths for White\u2019s pieces to attack your center. This move ignores the immediate danger posed by the knight on d5, allowing White to exploit the gaps you created and seize total control of the board. Always prioritize consolidating your position and defending your king before launching an aggressive pawn push that creates long-term structural liabilities.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": false
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move allows your opponent to lose a free pawn. By playing f5, your opponent moves a pawn that can be captured. This allows you to play fxg6, which wins a free pawn. You missed that your opponent left the pawn on g6 undefended. Playing d6 would have been much safer. It helps your opponent develop their pieces and keeps the game closer to level. Always check if your move allows your opponent to capture one of your pawns for free.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move allows your opponent to lose a free pawn. By playing f5, your opponent moves a pawn that can be captured. This allows you to play fxg6, which wins a free pawn. You missed that your opponent left the pawn on g6 undefended. Playing d6 would have been much safer. It helps your opponent develop their pieces and keeps the game closer to level. Always check if your move allows your opponent to capture one of your pawns for free.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187275350454:16",
+   "category": "missed",
+   "baseline": {
+    "text": "By playing Bd7, you allowed White to maintain their queen, which prevents you from simplifying the position and neutralizing their space advantage. The engine-recommended trade of queens is the most effective way to eliminate White\u2019s attacking prospects and force a favorable endgame. Remember that when your opponent has more central space and active pieces, exchanging the queens is often your best tool to ease the pressure.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": false
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "You missed a chance to win material with a skewer. You played Bd7 to block the threat of Qh5. This move is safe but lets your opponent recover from a slightly worse position. You missed Qxd1+, which skewers the king on e1 and the rook on h1 behind it. Playing Qxd1+ forces your opponent to trade queens and allows you to maintain your advantage. It immediately attacks the king and forces the capture of the rook behind it. Always look for checks that force your opponent to move their king before you make a quiet developing move.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "You missed a chance to win material with a skewer. You played Bd7 to block the threat of Qh5. This move is safe but lets your opponent recover from a slightly worse position. You missed Qxd1+, which skewers the king on e1 and the rook on h1 behind it. Playing Qxd1+ forces your opponent to trade queens and allows you to maintain your advantage. It immediately attacks the king and forces the capture of the rook behind it. Always look for checks that force your opponent to move their king before you make a quiet developing move.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187432770912:21",
+   "category": "positional",
+   "baseline": {
+    "text": "By playing Bg2, you allow Black to aggressively maintain their control of the kingside and ignore the development of your own queenside pieces. Your opponent can now solidify their position while you remain cramped and unable to challenge their central dominance. Remember that in positions where your king safety is precarious, prioritizing active development and piece coordination is always more important than making passive, slow moves.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": false
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move leaves your pawn on h3 undefended. By playing Bg2, you left your pawn on h3 undefended. Your opponent can now play gxh3 to capture that pawn for free. You missed that your opponent could capture your pawn on h3. Playing Bd2 would have been better. It keeps the position equal by protecting your pieces and controlling the center. Always check if your move leaves any of your pawns or pieces undefended.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move leaves your pawn on h3 undefended. By playing Bg2, you left your pawn on h3 undefended. Your opponent can now play gxh3 to capture that pawn for free. You missed that your opponent could capture your pawn on h3. Playing Bd2 would have been better. It keeps the position equal by protecting your pieces and controlling the center. Always check if your move leaves any of your pawns or pieces undefended.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187278272192:30",
+   "category": "slip",
+   "baseline": {
+    "text": "By playing c5, Black voluntarily closes the center and allows White\u2019s king to potentially find safety, drastically reducing the pressure you had built. You missed the chance to play d5, which would have shattered White's pawn structure and opened critical lines for your pieces to finish the game. Remember the principle that when you have a massive advantage, you should prioritize moves that open lines against the enemy king rather than moves that simplify the position or lock it down.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": true
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move ignores your threat of Be3. By playing c5, your opponent failed to address your threat to play Be3. This allows you to develop your bishop with a gain of time. Your opponent missed that your move Be3 would have attacked their bishop. The move d5 was better because it challenges the center and prepares to win a pawn after you play Be3. Always check what your opponent is threatening before you make your own move.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move ignores your threat of Be3. By playing c5, your opponent failed to address your threat to play Be3. This allows you to develop your bishop with a gain of time. Your opponent missed that your move Be3 would have attacked their bishop. The move d5 was better because it challenges the center and prepares to win a pawn after you play Be3. Always check what your opponent is threatening before you make your own move.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187569224340:20",
+   "category": "tactic",
+   "baseline": {
+    "text": "By playing f5, you have pinned your own knight to the king, allowing White to simply play Rxe4 and win a full piece for free because your pawn cannot recapture without leaving your king exposed. You overlooked that your knight on e4 was the anchor of your position, and removing its defense creates a tactical disaster. Always check for pins and hanging pieces before moving, especially when your king is still in the center of the board.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [
+     "pin"
+    ],
+    "hallucinated": false,
+    "names_key_move": false
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move allows your queen to be trapped. You played f5 to stop the threat of Rxe4+, but you left your queen vulnerable. Your opponent can now play Bg5, which traps your queen on d8 because it has no safe squares to move to. You missed that your queen would be completely cut off from escape after Bg5. Playing d5 is a better choice. It blocks the attack on your knight and keeps the position equal. Always check if your queen has a safe square to retreat to before making a move that blocks its path.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move allows your queen to be trapped. You played f5 to stop the threat of Rxe4+, but you left your queen vulnerable. Your opponent can now play Bg5, which traps your queen on d8 because it has no safe squares to move to. You missed that your queen would be completely cut off from escape after Bg5. Playing d5 is a better choice. It blocks the attack on your knight and keeps the position equal. Always check if your queen has a safe square to retreat to before making a move that blocks its path.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187532122644:47",
+   "category": "threat",
+   "baseline": {
+    "text": "By playing Rc4, you moved your rook into a pin against your own bishop, allowing Black to win material by simply capturing it with the bishop. You missed that the move Qa2+ forces the king to move and puts Black in a defensive posture, keeping your attacking advantage intact. Remember that when you have a massive advantage, look for forcing checks first rather than moving pieces into loose, undefended squares.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": true
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move allows Bxf2+ and loses a free pawn. By playing Rc4, you left your pawn on f2 undefended. Your opponent can now capture it with Bxf2+ to win material. You overlooked that your opponent was threatening to capture your piece on d4. You should have played Qa2+ to put your opponent in check and improve your position. This forces your opponent to respond to the threat instead of taking your pawn. Always check which of your pieces are left undefended before you make your move.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move allows Bxf2+ and loses a free pawn. By playing Rc4, you left your pawn on f2 undefended. Your opponent can now capture it with Bxf2+ to win material. You overlooked that your opponent was threatening to capture your piece on d4. You should have played Qa2+ to put your opponent in check and improve your position. This forces your opponent to respond to the threat instead of taking your pawn. Always check which of your pieces are left undefended before you make your move.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187569696892:28",
+   "category": "hung",
+   "baseline": {
+    "text": "Playing g5 creates permanent weaknesses around your king and allows White to easily exploit the exposed gaps. By pushing the pawn, you neglected your development and gave White a simple path to increase their pressure by improving their piece coordination. Always prioritize finishing your development and securing your king before starting an aggressive pawn expansion in front of your own castled position.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": false
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move leaves your knight on f6 undefended. By playing g5, you moved a pawn away from protecting your knight on f6. This allows your opponent to play Rxf6 and capture your knight for free. You missed that your knight on f6 was no longer defended after you moved your pawn. Playing Be6 would have kept your knight protected and helped you develop your pieces. This would have been a much safer choice for your position. Always check which of your pieces become undefended after you move a pawn.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move leaves your knight on f6 undefended. By playing g5, you moved a pawn away from protecting your knight on f6. This allows your opponent to play Rxf6 and capture your knight for free. You missed that your knight on f6 was no longer defended after you moved your pawn. Playing Be6 would have kept your knight protected and helped you develop your pieces. This would have been a much safer choice for your position. Always check which of your pieces become undefended after you move a pawn.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187348036320:18",
+   "category": "king",
+   "baseline": {
+    "text": "By playing exd4+, you allow White to simply move their king to d1, gaining a safe position while simultaneously unpinning their queen and activating their rook. You missed the chance to maintain pressure by playing Nxd4, which would have kept your knight centralized and forced White to deal with an active piece. A key takeaway is to avoid \"checking for the sake of checking\" when it unnecessarily improves your opponent\u2019s position and helps them complete their development.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": true
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move leads to a slightly worse position. You played exd4+ to deliver a discovered check with your queen on e7. While this stops your opponent from playing Bxc6+, it allows them to trade queens and leave you in a slightly worse position. You missed that playing Nxd4 would have allowed you to win a pawn. Playing Nxd4 is better because it develops your knight and puts pressure on your opponent, eventually leading to you winning a pawn. Always look for ways to win material or improve your position before settling for a simple check.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move leads to a slightly worse position. You played exd4+ to deliver a discovered check with your queen on e7. While this stops your opponent from playing Bxc6+, it allows them to trade queens and leave you in a slightly worse position. You missed that playing Nxd4 would have allowed you to win a pawn. Playing Nxd4 is better because it develops your knight and puts pressure on your opponent, eventually leading to you winning a pawn. Always look for ways to win material or improve your position before settling for a simple check.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187437307306:59",
+   "category": "mate",
+   "baseline": {
+    "text": "By playing Kg2, you moved your king away from the only piece that could capture the aggressive black queen, allowing Black to deliver a forced checkmate immediately. Your king was actually White's primary defender in this position, and by moving it, you missed the chance to eliminate the biggest threat on the board. Always prioritize calculating capture sequences for your opponent's most active pieces before moving your own king into safety.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": false
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move leads directly to checkmate. By playing Kg2, you moved your king into a position where your opponent can deliver a forced checkmate. Your opponent responds with Qe2+ followed by Qf2# to end the game. You overlooked that your king was vulnerable to a sequence of checks leading to mate. You should have played Kxg4 instead. This move captures a piece and keeps you in the game while you are down material. Always check for forcing moves like checks and captures before moving your king.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move leads directly to checkmate. By playing Kg2, you moved your king into a position where your opponent can deliver a forced checkmate. Your opponent responds with Qe2+ followed by Qf2# to end the game. You overlooked that your king was vulnerable to a sequence of checks leading to mate. You should have played Kxg4 instead. This move captures a piece and keeps you in the game while you are down material. Always check for forcing moves like checks and captures before moving your king.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  },
+  {
+   "id": "187570306366:48",
+   "category": "material",
+   "baseline": {
+    "text": "By playing Qd5, you stepped right into a discovered attack where your queen is no longer protecting the critical d4-square. Your opponent can now capture your knight with their rook, winning significant material and turning the tables completely. Always check the safety of your pieces after your own moves, especially when you are shifting a piece away from a square that was defending another important unit.",
+    "model": "gemini-3.1-flash-lite",
+    "illegal_moves": [],
+    "wrong_pieces": [],
+    "unverified_tactics": [],
+    "hallucinated": false,
+    "names_key_move": false
+   },
+   "grounded": {
+    "source": "ai",
+    "model": "gemini-3.1-flash-lite",
+    "attempts": 1,
+    "first_draft": {
+     "text": "This move leaves your opponent's bishop on c2 undefended. By playing Qd5, your opponent moved their queen away from protecting the bishop on c2. This allows you to capture the bishop with your knight on Nxc2. Your opponent overlooked that you can simply take their bishop for free. Your opponent should have played Rxd4 to challenge your pieces and maintain their advantage. This would have allowed them to win a piece. Always check which of your pieces are left undefended after you make a move.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "final": {
+     "text": "This move leaves your opponent's bishop on c2 undefended. By playing Qd5, your opponent moved their queen away from protecting the bishop on c2. This allows you to capture the bishop with your knight on Nxc2. Your opponent overlooked that you can simply take their bishop for free. Your opponent should have played Rxd4 to challenge your pieces and maintain their advantage. This would have allowed them to win a piece. Always check which of your pieces are left undefended after you make a move.",
+     "illegal_moves": [],
+     "wrong_pieces": [],
+     "unverified_tactics": [],
+     "hallucinated": false,
+     "names_key_move": true
+    },
+    "api_error": null
+   }
+  }
+ ]
+}

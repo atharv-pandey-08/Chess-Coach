@@ -1,0 +1,13 @@
+.venv
+.git
+.github
+.claude
+.env
+*.db
+!seed/chess_coach.db
+__pycache__
+*.pyc
+tests
+evals
+scripts
+docs

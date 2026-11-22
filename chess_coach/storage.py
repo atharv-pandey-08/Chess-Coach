@@ -3,11 +3,13 @@
 from __future__ import annotations
 
 import json
+import shutil
 import sqlite3
 import threading
 import time
+from collections.abc import Iterator, Sequence
 from contextlib import contextmanager
-from typing import Any, Iterator
+from typing import Any
 
 from . import config
 
@@ -72,6 +74,9 @@ def connect() -> Iterator[sqlite3.Connection]:
 
 
 def init() -> None:
+    if config.SEED_DB and config.SEED_DB.is_file() and not config.DB_PATH.exists():
+        config.DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(config.SEED_DB, config.DB_PATH)
     with connect() as c:
         c.executescript(SCHEMA)
 
@@ -90,7 +95,8 @@ def get_game(game_id: str) -> dict[str, Any] | None:
     return json.loads(row["data_json"]) if row else None
 
 
-def save_analysis(game_id: str, depth: int, evals: list[dict], white_acc, black_acc, user_acc) -> None:
+def save_analysis(game_id: str, depth: int, evals: Sequence[dict | None], white_acc: float | None,
+                  black_acc: float | None, user_acc: float | None) -> None:
     with connect() as c:
         c.execute(
             "INSERT OR REPLACE INTO analyses VALUES (?, ?, ?, ?, ?, ?, ?)",
@@ -214,5 +220,5 @@ def schedule_puzzle(puzzle_id: str, *, due: int, interval_d: float, ease: float,
 
 
 def _puzzle_row(row: sqlite3.Row) -> dict[str, Any]:
-    return {**json.loads(row["data_json"]), "username": row["username"], "due": row["due"], "interval_d": row["interval_d"],
-            "ease": row["ease"], "reps": row["reps"], "lapses": row["lapses"]}
+    return {**json.loads(row["data_json"]), "username": row["username"], "due": row["due"],
+            "interval_d": row["interval_d"], "ease": row["ease"], "reps": row["reps"], "lapses": row["lapses"]}

@@ -14,15 +14,17 @@ A sheet answers the questions a human coach asks:
 
 from __future__ import annotations
 
+import contextlib
 import re
 import threading
+from collections.abc import Sequence
 from typing import Any
 
 import chess
 import chess.engine
 
 from . import config, tactics
-from .analysis import ParsedGame, _pov, _describe, _info_to_eval, format_eval
+from .analysis import ParsedGame, _describe, _info_to_eval, _pov, format_eval
 
 BAD = ("Inaccuracy", "Mistake", "Blunder")
 
@@ -43,10 +45,8 @@ class CoachEngine:
             if not path:
                 return None
             self._engine = chess.engine.SimpleEngine.popen_uci(path)
-            try:
-                self._engine.configure({"Threads": config.ENGINE_THREADS, "Hash": 64})
-            except chess.engine.EngineError:
-                pass
+            with contextlib.suppress(chess.engine.EngineError):
+                self._engine.configure({"Threads": config.ENGINE_THREADS, "Hash": min(64, config.ENGINE_HASH_MB)})
         return self._engine
 
     def analyse(self, board: chess.Board, multipv: int = 1) -> list[dict]:
@@ -72,10 +72,8 @@ class CoachEngine:
     def close(self) -> None:
         with self._lock:
             if self._engine is not None:
-                try:
+                with contextlib.suppress(Exception):
                     self._engine.quit()
-                except Exception:
-                    pass
                 self._engine = None
 
 
@@ -102,9 +100,11 @@ def _line_facts(board: chess.Board, ucis: list[str], perspective: chess.Color, l
     """SAN line, the tactics along it, and where material ends up (perspective's POV)."""
     steps = _walk(board, ucis, limit)
     if not steps:
-        return {"san": [], "uci": [], "fens": [], "numbered": "", "tactics": [], "material_change": 0, "ends_in_mate": False}
+        return {"san": [], "uci": [], "fens": [], "numbered": "", "tactics": [],
+                "material_change": 0, "ends_in_mate": False}
     start = tactics.material(board, perspective)
-    sans, found = [], []
+    sans: list[str] = []
+    found: list[dict[str, Any]] = []
     for n, (b, mv) in enumerate(steps):
         sans.append(b.san(mv))
         if n < 4:  # deep PV moves are the engine's tidy-up, not the point of the line
@@ -145,7 +145,8 @@ def _material_words(change: int, who: str) -> str:
         return f"{who} keep{s} material level"
     pieces = {1: "a pawn", 2: "two pawns' worth of material", 3: "a piece", 4: "a piece and a pawn",
               5: "a rook's worth"}
-    word = pieces.get(abs(change), f"{abs(change)} points of material" if abs(change) < 9 else "a queen's worth or more")
+    fallback = f"{abs(change)} points of material" if abs(change) < 9 else "a queen's worth or more"
+    word = pieces.get(abs(change), fallback)
     return f"{who} {'win' if change > 0 else 'lose'}{s} {word}"
 
 
@@ -171,7 +172,7 @@ def _king_safety(board: chess.Board, color: chess.Color) -> dict:
 # The fact sheet
 # ---------------------------------------------------------------------------
 
-def build_facts(parsed: ParsedGame, evals: list[dict], review: dict, ply: int, *,
+def build_facts(parsed: ParsedGame, evals: Sequence[dict | None], review: dict, ply: int, *,
                 user_color: str, engine: CoachEngine | None = None) -> dict[str, Any]:
     """Facts about the move at `ply` (1-based). `review` is build_review's output."""
     i = ply - 1
@@ -183,6 +184,8 @@ def build_facts(parsed: ParsedGame, evals: list[dict], review: dict, ply: int, *
     side_name = {mover: "you" if you else "the opponent", opp: "the opponent" if you else "you"}
     entry = review["moves"][i]
     ev_b, ev_a = evals[i], evals[i + 1]
+    if ev_b is None or ev_a is None:
+        raise ValueError("Facts need the engine evaluations on both sides of the move.")
     wp_b, wp_a = _pov(ev_b["wp"], mover), _pov(ev_a["wp"], mover)
     san = parsed.sans[i]
     cls = entry["classification"]
@@ -236,7 +239,8 @@ def build_facts(parsed: ParsedGame, evals: list[dict], review: dict, ply: int, *
                     win_chance=round(wp_b),
                     summary=(f"{line['numbered']}" + (
                         ", and it ends in checkmate." if line["ends_in_mate"] else
-                        f", and {_material_words(line['material_change'], side_name[mover])}." if line["material_change"] > 0
+                        f", and {_material_words(line['material_change'], side_name[mover])}."
+                        if line["material_change"] > 0
                         else f" keeps the position {_describe(wp_b)}.")) if line["san"] else "")
         facts["best"] = line
     else:
@@ -253,7 +257,7 @@ def build_facts(parsed: ParsedGame, evals: list[dict], review: dict, ply: int, *
     facts["position_after"] = {
         "material": tactics.material(after, mover),
         "material_text": _material_balance_text(tactics.material(after, mover), side_name[mover]),
-        "hanging_for_mover": [{"square": chess.square_name(sq), "piece": tactics.NAME[after.piece_type_at(sq)],
+        "hanging_for_mover": [{"square": chess.square_name(sq), "piece": tactics.NAME[tactics.ptype(after, sq)],
                                "capture": after.san(cap)} for sq, cap, _ in tactics.hanging(after, mover)][:3],
         "mover_king": _king_safety(after, mover),
     }
@@ -266,7 +270,9 @@ def build_facts(parsed: ParsedGame, evals: list[dict], review: dict, ply: int, *
 def _material_balance_text(m: int, who: str) -> str:
     if m == 0:
         return "Material is level."
-    return f"{who.capitalize()} {'are' if who == 'you' else 'is'} {'up' if m > 0 else 'down'} {abs(m)} point{'s' if abs(m) != 1 else ''} of material."
+    verb = "are" if who == "you" else "is"
+    points = f"{abs(m)} point{'s' if abs(m) != 1 else ''}"
+    return f"{who.capitalize()} {verb} {'up' if m > 0 else 'down'} {points} of material."
 
 
 def _threat(before: chess.Board, after: chess.Board, move: chess.Move, wp_now: float, ev_after: dict,
@@ -306,7 +312,8 @@ def _threat(before: chess.Board, after: chess.Board, move: chess.Move, wp_now: f
         still_works = any(m.kind != "promotion" for m in tactics.motifs(after, threat_move))
         addressed = not (still_works or ev_after.get("best") == threat_move.uci())
     them = side_name[not mover]
-    return {"in_check": False, "move": tsan, "uci": threat_move.uci(), "tactics": motifs, "cost": cost, "addressed": addressed,
+    return {"in_check": False, "move": tsan, "uci": threat_move.uci(), "tactics": motifs, "cost": cost,
+            "addressed": addressed,
             "text": (f"{them.capitalize()} threatened {tsan}"
                      + (f": {motifs[0]['text']}" if motifs else "")
                      + (" The move dealt with it." if addressed else " The move did not stop it."))}
@@ -405,4 +412,5 @@ def vocabulary(facts: dict, before: chess.Board, after: chess.Board) -> dict:
             "pieces": {sq: sorted(v) for sq, v in sorted(pieces.items())}}
 
 
-SAN_RE = re.compile(r"\b(?:O-O-O|O-O|[KQRBN][a-h]?[1-8]?x?[a-h][1-8]|[a-h]x[a-h][1-8](?:=[QRBN])?|[a-h][1-8]=[QRBN])[+#]?")
+SAN_RE = re.compile(r"\b(?:O-O-O|O-O|[KQRBN][a-h]?[1-8]?x?[a-h][1-8]"
+                    r"|[a-h]x[a-h][1-8](?:=[QRBN])?|[a-h][1-8]=[QRBN])[+#]?")

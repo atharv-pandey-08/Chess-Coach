@@ -1,0 +1,23 @@
+[project]
+name = "chess-coach"
+version = "0.4.0"
+description = "Review your Chess.com games with Stockfish and a coach that can't invent tactics."
+requires-python = ">=3.11"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM"]
+ignore = [
+  "E701",   # one-line `if x: return y` reads better in the small scoring helpers
+  "SIM108", # ternaries aren't always clearer
+]
+
+[tool.mypy]
+python_version = "3.11"
+files = ["chess_coach", "server.py", "evals", "scripts"]
+ignore_missing_imports = true
+check_untyped_defs = true
+warn_unused_ignores = true
