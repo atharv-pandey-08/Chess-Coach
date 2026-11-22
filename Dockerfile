@@ -18,9 +18,11 @@ COPY chess_coach ./chess_coach
 COPY web ./web
 COPY assets ./assets
 COPY server.py .
+COPY seed ./seed
 
 # The SQLite cache (analyses, puzzles, AI notes) lives on a volume so it survives restarts.
 ENV CHESS_COACH_DB=/data/chess_coach.db \
+    CHESS_COACH_SEED_DB=/app/seed/chess_coach.db \
     STOCKFISH_PATH=/usr/games/stockfish \
     PYTHONUNBUFFERED=1
 RUN mkdir -p /data && useradd --create-home coach && chown coach /data
@@ -30,4 +32,5 @@ EXPOSE 5050
 
 # One worker on purpose: analysis jobs, the batch queue and the coach engine live in this
 # process's memory. Threads handle concurrent requests (the UI polls while Stockfish runs).
-CMD ["gunicorn", "--workers", "1", "--threads", "8", "--timeout", "120", "--bind", "0.0.0.0:5050", "server:app"]
+# Hosts such as Render pick the port and pass it in $PORT.
+CMD ["sh", "-c", "exec gunicorn --workers 1 --threads 8 --timeout 120 --bind 0.0.0.0:${PORT:-5050} server:app"]

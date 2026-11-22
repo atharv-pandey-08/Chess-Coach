@@ -109,16 +109,16 @@ docker run -p 5050:5050 -v chess-coach-data:/data chess-coach      # add -e GEMI
 
 The image bundles Stockfish and runs the app under gunicorn. CI builds it and smoke-tests it on every push.
 
-### Public demo (Hugging Face Spaces)
+### Public demo (Render)
 
-The hosted demo is the same image with `PUBLIC_DEMO=1`, which caps AI explanations per visitor and
-per day (cached explanations are free), caps batch analysis, and analyses the default player's
-recent games on start-up so Insights and Puzzles aren't empty. After CI passes on `main`,
-`.github/workflows/deploy.yml` builds the Space with `scripts/build_space.py` and pushes it.
+`render.yaml` deploys the same image to Render's free plan with `PUBLIC_DEMO=1`, which caps AI
+explanations per visitor and per day (cached explanations are free) and caps batch analysis.
+The free plan has 0.1 CPU and wipes its disk when it sleeps, so the image ships a starter
+database (`seed/`, built by `scripts/make_seed_db.py` from public Chess.com games) with the
+default player's games already analysed: Insights and Puzzles work on the first visit.
 
-To deploy your own: create a Docker Space, add `GEMINI_API_KEY` as a secret in the Space's
-settings, then in this GitHub repo add a Hugging Face write token as the secret `HF_TOKEN` and
-the Space's name (`user/space`) as the variable `HF_SPACE`.
+To deploy your own: Render → New → Blueprint → this repo, and paste a Gemini key when asked
+(optional). Every push to `main` redeploys.
 
 ## How the coach works
 
@@ -212,6 +212,7 @@ Copy `.env.example` to `.env`. Every setting is optional:
 | `AI_PER_CLIENT_DAY` / `AI_PER_DAY` | `15` / `300` in public mode, else no cap | daily AI coach calls per visitor / in total |
 | `BATCH_MAX` | `20` in public mode, else `100` | most games one batch analysis can queue |
 | `WARM_START_GAMES` | `20` in public mode, else `0` | games of the default player analysed on start-up |
+| `CHESS_COACH_SEED_DB` | — (set in the Docker image) | database copied into place on first start |
 
 ## Project layout
 

@@ -1,0 +1,21 @@
+# Render Blueprint for the public demo (free plan: 0.1 CPU, 512 MB, sleeps after 15 min idle).
+# Render > New > Blueprint > pick this repo. You'll be asked for GEMINI_API_KEY (optional).
+services:
+  - type: web
+    name: chess-coach
+    runtime: docker
+    plan: free
+    branch: main
+    autoDeploy: true
+    healthCheckPath: /api/config
+    envVars:
+      - key: PUBLIC_DEMO
+        value: "1"
+      # Analyses come pre-computed from the seed database; don't spend the tiny CPU on start-up.
+      - key: WARM_START_GAMES
+        value: "0"
+      # Two Stockfish processes have to fit in 512 MB.
+      - key: ENGINE_HASH_MB
+        value: "16"
+      - key: GEMINI_API_KEY
+        sync: false

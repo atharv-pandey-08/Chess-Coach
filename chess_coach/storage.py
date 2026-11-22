@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import json
+import shutil
 import sqlite3
 import threading
 import time
@@ -73,6 +74,9 @@ def connect() -> Iterator[sqlite3.Connection]:
 
 
 def init() -> None:
+    if config.SEED_DB and config.SEED_DB.is_file() and not config.DB_PATH.exists():
+        config.DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(config.SEED_DB, config.DB_PATH)
     with connect() as c:
         c.executescript(SCHEMA)
 

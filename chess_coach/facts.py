@@ -46,7 +46,7 @@ class CoachEngine:
                 return None
             self._engine = chess.engine.SimpleEngine.popen_uci(path)
             with contextlib.suppress(chess.engine.EngineError):
-                self._engine.configure({"Threads": config.ENGINE_THREADS, "Hash": 64})
+                self._engine.configure({"Threads": config.ENGINE_THREADS, "Hash": min(64, config.ENGINE_HASH_MB)})
         return self._engine
 
     def analyse(self, board: chess.Board, multipv: int = 1) -> list[dict]:

@@ -10,9 +10,9 @@ __pycache__/
 # System & Local Data
 .DS_Store
 *.db
+!seed/chess_coach.db
 *.sqlite3
 .env
 # Claude Code local state (keep the shared launch config)
 .claude/*
 !.claude/launch.json
-build/

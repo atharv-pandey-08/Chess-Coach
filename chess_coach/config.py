@@ -49,6 +49,9 @@ ENGINE_HASH_MB: int = _int_env("ENGINE_HASH_MB", 128)
 ARCHIVES_TO_SCAN: int = _int_env("ARCHIVES_TO_SCAN", 3)
 MAX_GAMES: int = _int_env("MAX_GAMES", 100)
 DB_PATH: Path = Path(os.environ.get("CHESS_COACH_DB", PROJECT_DIR / "chess_coach.db"))
+# Copied to DB_PATH when that doesn't exist yet: lets a host with a wiped disk start with
+# analysed games instead of re-running Stockfish on every cold start (see scripts/make_seed_db.py).
+SEED_DB: Path | None = Path(os.environ["CHESS_COACH_SEED_DB"]) if os.environ.get("CHESS_COACH_SEED_DB") else None
 
 # Public demo mode (the hosted Space): rate-limits the AI coach, caps batch sizes, trusts the
 # hosting proxy's X-Forwarded-For header, and analyses the default player's games on start-up.
